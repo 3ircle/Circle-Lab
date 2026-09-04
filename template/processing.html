@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سامانه تحلیل داده | صفحه پردازش و آمار ستون‌ها</title>
+    <!-- Bootstrap 5 RTL CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Vazirmatn Font -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vazirmatn@33.0.3/Vazirmatn-font-face.css">
+    <!-- Custom Dark CSS -->
+    <link rel="stylesheet" href="assets/css/custom.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark-custom sticky-top">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand d-flex align-items-center gap-2" href="index.html">
+                <img src="assets/images/logo.png" alt="Logo" class="brand-logo">
+                <span class="fw-bold fs-5 text-white">Circle<span style="color: var(--secondary-accent);">Lab</span></span>
+            </a>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0 gap-2">
+                    <li class="nav-item">
+                        <a class="nav-link px-3 rounded-3 text-white-50" href="index.html"><i class="bi bi-folder2-open me-2"></i>پروژه‌ها</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3 rounded-3 text-white-50" href="chat.html"><i class="bi bi-robot me-2"></i>دستيار هوش مصنوعی</a>
+                    </li>
+                </ul>
+                <div class="d-flex align-items-center gap-2">
+                    <a href="chat.html" class="btn btn-outline-dark-custom d-flex align-items-center gap-2">
+                        <i class="bi bi-chat-quote-fill text-cyan" style="color: var(--secondary-accent);"></i>
+                        <span>چت با AI درباره این دیتاست</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container-fluid px-4 py-4 flex-grow-1">
+
+        <!-- Top Header & Dataset Summary Bar -->
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+            <div>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-1 small text-muted">
+                        <li class="breadcrumb-item"><a href="index.html" class="text-decoration-none text-muted">پروژه‌ها</a></li>
+                        <li class="breadcrumb-item active text-white" aria-current="page">تحلیل رفتار مشتریان فروشگاه</li>
+                    </ol>
+                </nav>
+                <h3 class="fw-bold text-white mb-0">گزارش آماری و پردازش ستون‌ها</h3>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-dark-custom btn-sm"><i class="bi bi-download me-1"></i> خروجی گزارش (PDF)</button>
+                <button class="btn btn-indigo btn-sm"><i class="bi bi-arrow-repeat me-1"></i> بازپردازش داده‌ها</button>
+            </div>
+        </div>
+
+        <!-- Dataset Summary Cards Bar -->
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-md-4 col-xl-2">
+                <div class="stat-tile">
+                    <div>
+                        <div class="text-muted small">تعداد سطرها</div>
+                        <div class="fs-5 fw-bold text-white">۴۵,۲۰۰</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-xl-2">
+                <div class="stat-tile">
+                    <div>
+                        <div class="text-muted small">تعداد ستون‌ها</div>
+                        <div class="fs-5 fw-bold text-white">۱۸ ستون</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-xl-2">
+                <div class="stat-tile">
+                    <div>
+                        <div class="text-muted small">حجم حافظه</div>
+                        <div class="fs-5 fw-bold text-white">۶.۴ مگابایت</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-xl-2">
+                <div class="stat-tile">
+                    <div>
+                        <div class="text-muted small">مقادیر مفقود (Missing)</div>
+                        <div class="fs-5 fw-bold text-warning">۱.۲٪ (۵۴۲ سطر)</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-xl-2">
+                <div class="stat-tile">
+                    <div>
+                        <div class="text-muted small">ستون‌های عددی</div>
+                        <div class="fs-5 fw-bold text-cyan" style="color: var(--secondary-accent);">۱۲ ستون</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-4 col-xl-2">
+                <div class="stat-tile">
+                    <div>
+                        <div class="text-muted small">ستون‌های متنی/دسته‌ای</div>
+                        <div class="fs-5 fw-bold text-purple" style="color: var(--purple-accent);">۶ ستون</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Column Section Header & Filter -->
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+            <h5 class="fw-bold text-white mb-0 d-flex align-items-center gap-2">
+                <i class="bi bi-layout-three-columns" style="color: var(--primary-accent);"></i>
+                <span>تحلیل تفکیکی ستون‌ها</span>
+            </h5>
+            <div class="d-flex gap-2">
+                <input type="text" class="form-control form-control-dark form-control-sm" placeholder="جستجوی ستون..." style="width: 200px;">
+                <select class="form-select form-select-dark form-select-sm" style="width: 160px;">
+                    <option value="all">همه انواع ستون‌ها</option>
+                    <option value="num">عددی (Numerical)</option>
+                    <option value="cat">متنی (Categorical)</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Columns Grid -->
+        <div class="row g-4">
+
+            <!-- Column Card 1 (Numerical: Total Purchase Value) -->
+            <div class="col-12 col-lg-6 col-xl-4">
+                <div class="card card-dark h-100">
+                    <div class="card-header-dark d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-123 text-cyan fs-5" style="color: var(--secondary-accent);"></i>
+                            <span class="fw-bold text-white">Total_Purchase_Amount</span>
+                        </div>
+                        <span class="badge badge-type badge-float">float64</span>
+                    </div>
+                    <div class="card-body p-3">
+                        <!-- Stats Mini Table -->
+                        <div class="table-responsive mb-3">
+                            <table class="table table-sm table-dark-custom mb-0 small">
+                                <tbody>
+                                    <tr>
+                                        <td class="text-muted">میانگین (Mean):</td>
+                                        <td class="fw-semibold text-end text-white">۲,۴۵۰,۰۰۰ تومان</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">میانه (Median):</td>
+                                        <td class="fw-semibold text-end text-white">۱,۹۸۰,۰۰۰ تومان</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">انحراف معیار (Std):</td>
+                                        <td class="fw-semibold text-end text-white">۴۲۰,۰۰۰</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">داده‌های یونیک (Unique):</td>
+                                        <td class="fw-semibold text-end text-white">۱۲,۳4۰</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">مقادیر خالی (Null):</td>
+                                        <td class="fw-semibold text-end text-success">۰٪ (۰ سطر)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- Chart Container -->
+                        <div class="text-muted small mb-1"><i class="bi bi-bar-chart-fill me-1"></i>نمودار توزیع فراوانی (Distribution)</div>
+                        <div style="height: 160px; position: relative;">
+                            <canvas id="chartColumn1"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Column Card 2 (Categorical: Customer Location / Region) -->
+            <div class="col-12 col-lg-6 col-xl-4">
+                <div class="card card-dark h-100">
+                    <div class="card-header-dark d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-fonts text-purple fs-5" style="color: var(--purple-accent);"></i>
+                            <span class="fw-bold text-white">Customer_Region</span>
+                        </div>
+                        <span class="badge badge-type badge-string">object</span>
+                    </div>
+                    <div class="card-body p-3">
+                        <!-- Stats Mini Table -->
+                        <div class="table-responsive mb-3">
+                            <table class="table table-sm table-dark-custom mb-0 small">
+                                <tbody>
+                                    <tr>
+                                        <td class="text-muted">مد (Most Frequent):</td>
+                                        <td class="fw-semibold text-end text-white">تهران (۳۸٪)</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">داده‌های یونیک (Unique):</td>
+                                        <td class="fw-semibold text-end text-white">۵ منطقه</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">مقادیر خالی (Null):</td>
+                                        <td class="fw-semibold text-end text-warning">۱.۵٪ (۶۷۸ سطر)</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">دسته پیشتاز:</td>
+                                        <td class="fw-semibold text-end text-white">منطقه شمال</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- Chart Container -->
+                        <div class="text-muted small mb-1"><i class="bi bi-pie-chart-fill me-1"></i>فراوانی دسته‌ها</div>
+                        <div style="height: 160px; position: relative;">
+                            <canvas id="chartColumn2"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Column Card 3 (Numerical: Customer Age) -->
+            <div class="col-12 col-lg-6 col-xl-4">
+                <div class="card card-dark h-100">
+                    <div class="card-header-dark d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-hash text-indigo fs-5" style="color: var(--primary-accent);"></i>
+                            <span class="fw-bold text-white">Customer_Age</span>
+                        </div>
+                        <span class="badge badge-type badge-int">int64</span>
+                    </div>
+                    <div class="card-body p-3">
+                        <!-- Stats Mini Table -->
+                        <div class="table-responsive mb-3">
+                            <table class="table table-sm table-dark-custom mb-0 small">
+                                <tbody>
+                                    <tr>
+                                        <td class="text-muted">میانگین (Mean):</td>
+                                        <td class="fw-semibold text-end text-white">۳۴.۲ سال</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">میانه (Median):</td>
+                                        <td class="fw-semibold text-end text-white">۳۲ سال</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">کمترین / بیشترین:</td>
+                                        <td class="fw-semibold text-end text-white">۱۸ تا ۶۵ سال</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">مقادیر خالی (Null):</td>
+                                        <td class="fw-semibold text-end text-success">۰٪ (۰)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- Chart Container -->
+                        <div class="text-muted small mb-1"><i class="bi bi-bar-chart-line-fill me-1"></i>توزیع سنی مخاطبان</div>
+                        <div style="height: 160px; position: relative;">
+                            <canvas id="chartColumn3"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer mt-auto py-3 border-top border-secondary border-opacity-25 text-center text-muted small">
+        <div class="container">
+            <span>سامانه تحلیل داده هوشمند CircleLab &copy; ۲۰۲۶</span>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS & Charts JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/charts.js"></script>
+    <script src="assets/js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Render Sample Charts for Columns
+            renderColumnChart('chartColumn1', 'bar', ['100k-500k', '500k-1M', '1M-2M', '2M-5M', '5M+'], [4500, 12000, 18500, 8200, 2000], '#22D3EE');
+            renderColumnChart('chartColumn2', 'bar', ['تهران', 'اصفهان', 'مشهد', 'شیراز', 'تبریز'], [16000, 9500, 8200, 6100, 5400], '#A855F7');
+            renderColumnChart('chartColumn3', 'bar', ['18-24', '25-34', '35-44', '45-54', '55+'], [6200, 19500, 12400, 5100, 2000], '#6366F1');
+        });
+    </script>
+</body>
+</html>

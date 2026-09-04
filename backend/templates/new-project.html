@@ -1,0 +1,90 @@
+{% extends 'shared/base.html' %}
+{% load static %}
+
+{% block title %}سامانه تحلیل داده | ساخت پروژه جدید{% endblock %}
+
+{% block content %}
+<main class="container py-5 flex-grow-1" style="max-width: 850px;">
+
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h3 class="fw-bold text-white mb-1">ایجاد پروژه و بارگذاری دیتاست</h3>
+            <p class="text-muted mb-0">اطلاعات پروژه را وارد کرده و فایل داده (CSV / Excel) خود را آپلود نمایید.</p>
+        </div>
+        <a href="{% url 'index' %}" class="btn btn-outline-dark-custom btn-sm">
+            <i class="bi bi-arrow-right me-1"></i> بازگشت
+        </a>
+    </div>
+
+    <div class="card card-dark">
+        <div class="card-body p-4 p-md-5">
+            <form action="{% url 'processing' %}" method="GET">
+
+                <!-- Project Name -->
+                <div class="mb-4">
+                    <label for="projectName" class="form-label text-white fw-semibold">نام پروژه <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control form-control-dark" id="projectName" placeholder="مثلاً: تحلیل فروش فصل بهار" required>
+                </div>
+
+                <!-- Description -->
+                <div class="mb-4">
+                    <label for="projectDesc" class="form-label text-white fw-semibold">توضیحات (اختیاری)</label>
+                    <textarea class="form-control form-control-dark" id="projectDesc" rows="3" placeholder="توضیح مختصری درباره اهداف این تحلیل..."></textarea>
+                </div>
+
+                <!-- Drag and Drop Upload Area -->
+                <div class="mb-4">
+                    <label class="form-label text-white fw-semibold">آپلود فایل دیتاست <span class="text-danger">*</span></label>
+                    <div class="dropzone" id="uploadDropzone">
+                        <i class="bi bi-cloud-arrow-up-fill fs-1 text-indigo mb-2" style="color: var(--primary-accent);"></i>
+                        <h6 class="text-white fw-bold">فایل خود را به اینجا بکشید و رها کنید</h6>
+                        <p class="text-muted small mb-3">پشتیبانی از فرمت‌های CSV، XLSX و Parquet (حداکثر حجم ۱۰۰ مگابایت)</p>
+                        <button type="button" class="btn btn-outline-dark-custom btn-sm">انتخاب فایل از سیستم</button>
+                        <input type="file" id="datasetFileInput" class="d-none" accept=".csv, .xlsx, .xls, .parquet" required>
+                    </div>
+                    <div id="selectedFileInfo"></div>
+                </div>
+
+                <!-- Dataset Configuration Options -->
+                <div class="border-top border-secondary border-opacity-25 pt-4 mb-4">
+                    <h6 class="fw-bold text-white mb-3 d-flex align-items-center gap-2">
+                        <i class="bi bi-sliders text-cyan" style="color: var(--secondary-accent);"></i>
+                        <span>تنظیمات پیش‌فرض پردازش</span>
+                    </h6>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small">کدگذاری فایل (Encoding)</label>
+                            <select class="form-select form-select-dark">
+                                <option value="utf-8" selected>UTF-8 (پیش‌فرض)</option>
+                                <option value="utf-8-sig">UTF-8 with BOM (مخصوص اکسل)</option>
+                                <option value="windows-1256">Windows-1256 (فارسی قدیمی)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small">جداکننده ستون‌ها (Delimiter)</label>
+                            <select class="form-select form-select-dark">
+                                <option value="auto" selected>تشخیص خودکار</option>
+                                <option value=",">کامای انگلیسی ( , )</option>
+                                <option value=";">نقطه کاما ( ; )</option>
+                                <option value="\t">Tab</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="d-flex justify-content-end gap-3 pt-2">
+                    <a href="{% url 'index' %}" class="btn btn-outline-dark-custom">انصراف</a>
+                    <button type="submit" class="btn btn-indigo d-flex align-items-center gap-2">
+                        <i class="bi bi-cpu-fill"></i>
+                        <span>آپلود و شروع پردازش داده</span>
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+</main>
+{% endblock %}

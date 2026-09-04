@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سامانه تحلیل داده | چت و دستیار هوش مصنوعی</title>
+    <!-- Bootstrap 5 RTL CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Vazirmatn Font -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vazirmatn@33.0.3/Vazirmatn-font-face.css">
+    <!-- Custom Dark CSS -->
+    <link rel="stylesheet" href="assets/css/custom.css">
+</head>
+<body class="overflow-hidden">
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark-custom">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand d-flex align-items-center gap-2" href="index.html">
+                <img src="assets/images/logo.png" alt="Logo" class="brand-logo">
+                <span class="fw-bold fs-5 text-white">Circle<span style="color: var(--secondary-accent);">Lab</span></span>
+            </a>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0 gap-2">
+                    <li class="nav-item">
+                        <a class="nav-link px-3 rounded-3 text-white-50" href="index.html"><i class="bi bi-folder2-open me-2"></i>پروژه‌ها</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active px-3 rounded-3" href="chat.html"><i class="bi bi-robot me-2"></i>دستيار هوش مصنوعی</a>
+                    </li>
+                </ul>
+                <div class="d-flex align-items-center gap-2">
+                    <select class="form-select form-select-dark form-select-sm" style="min-width: 220px;">
+                        <option selected>پروژه: تحلیل رفتار مشتریان فروشگاه</option>
+                        <option>پروژه: پیش‌بینی فروش محصولات</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Chat Workspace -->
+    <div class="container-fluid flex-grow-1 p-0">
+        <div class="row g-0 h-100" style="height: calc(100vh - 65px) !important;">
+
+            <!-- Sidebar: Saved Conversations & Quick Context -->
+            <div class="col-12 col-md-3 border-end border-secondary border-opacity-25 bg-dark-surface p-3 d-none d-md-flex flex-column" style="background: var(--bg-surface);">
+
+                <button class="btn btn-indigo w-100 mb-3 d-flex align-items-center justify-content-center gap-2">
+                    <i class="bi bi-plus-lg"></i>
+                    <span>گفتگوی جدید</span>
+                </button>
+
+                <div class="text-muted small fw-bold mb-2">گفتگوهای اخیر</div>
+                <div class="list-group list-group-flush gap-1 flex-grow-1 overflow-y-auto mb-3">
+                    <a href="#" class="list-group-item list-group-item-action bg-transparent text-white border-0 rounded-2 active p-2" style="background-color: rgba(99, 102, 241, 0.15) !important;">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-chat-text text-indigo" style="color: var(--primary-accent);"></i>
+                            <div class="text-truncate small">بررسی همبستگی سن و خرید</div>
+                        </div>
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action bg-transparent text-muted border-0 rounded-2 p-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-chat-text"></i>
+                            <div class="text-truncate small">شناسایی داده‌های پرت فروش</div>
+                        </div>
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action bg-transparent text-muted border-0 rounded-2 p-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-chat-text"></i>
+                            <div class="text-truncate small">پیش‌نهاد مدل خوشه‌بندی مشتریان</div>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Active Dataset Context Card -->
+                <div class="p-3 rounded-3 border border-secondary border-opacity-25 mt-auto" style="background: #0F172A;">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="text-muted small">دیتاست فعال</span>
+                        <span class="badge bg-success bg-opacity-25 text-success">آماده تحلیل</span>
+                    </div>
+                    <div class="fw-bold text-white small text-truncate mb-1">Customers_Q3_2026.csv</div>
+                    <div class="text-muted extra-small" style="font-size: 0.75rem;">۴۵,۲۰۰ سطر | ۱۸ ستون</div>
+                </div>
+
+            </div>
+
+            <!-- Main Chat Area -->
+            <div class="col-12 col-md-9 d-flex flex-column h-100" style="background: var(--bg-main);">
+
+                <!-- Chat Messages Feed -->
+                <div class="chat-messages flex-grow-1 p-4 overflow-y-auto">
+
+                    <!-- AI Welcome Message -->
+                    <div class="d-flex gap-3 chat-bubble-ai chat-bubble">
+                        <div class="ai-avatar flex-shrink-0">
+                            <i class="bi bi-robot"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold text-cyan mb-1" style="color: var(--secondary-accent);">دستیار هوش مصنوعی CircleLab</div>
+                            <p class="mb-2">سلام! من دیتاست <strong>«تحلیل رفتار مشتریان فروشگاه»</strong> را بررسی کردم. آماده پاسخگویی به سوالات شما یا انجام تحلیل‌های پیشرفته متنی و آماری هستم.</p>
+                            <p class="mb-0 text-muted small">چند سوال پیشنهادی برای شروع:</p>
+                        </div>
+                    </div>
+
+                    <!-- User Message -->
+                    <div class="d-flex gap-3 chat-bubble-user chat-bubble ms-auto">
+                        <div>
+                            <p class="mb-0">کدام گروه سنی بیشترین میزان خرید را داشته‌اند و میانگین خرید آن‌ها چقدر است؟</p>
+                        </div>
+                        <div class="user-avatar flex-shrink-0">
+                            <i class="bi bi-person-fill"></i>
+                        </div>
+                    </div>
+
+                    <!-- AI Response with Stats & Highlights -->
+                    <div class="d-flex gap-3 chat-bubble-ai chat-bubble">
+                        <div class="ai-avatar flex-shrink-0">
+                            <i class="bi bi-robot"></i>
+                        </div>
+                        <div class="w-100">
+                            <div class="fw-bold text-cyan mb-2" style="color: var(--secondary-accent);">دستیار هوش مصنوعی CircleLab</div>
+                            <p class="mb-3">بر اساس تحلیل ستون‌های <code>Customer_Age</code> و <code>Total_Purchase_Amount</code>:</p>
+
+                            <!-- Data Summary Box inside Chat -->
+                            <div class="p-3 rounded-3 mb-3 border border-secondary border-opacity-25" style="background: #0F172A;">
+                                <ul class="mb-0 ps-3 text-white small">
+                                    <li class="mb-1">گروه سنی <strong>۲۵ تا ۳۴ سال</strong> با <strong>۱۹,۵۰۰ خرید</strong> بیشترین سهم خریداران را تشکیل می‌دهند.</li>
+                                    <li class="mb-1">میانگین مبلغ خرید این گروه سنی <strong>۳,۱۵۰,۰۰۰ تومان</strong> است که ۲۰٪ بالاتر از میانگین کل مشتریان است.</li>
+                                    <li>گروه سنی ۵۵ سال به بالا کمترین تعداد خرید اما بالاترین ارزش سبد خرید را ثبت کرده‌اند.</li>
+                                </ul>
+                            </div>
+
+                            <p class="mb-0 text-muted small">آیا مایلید نمودار مقایسه‌ای این دو گروه سنی را برای شما ترسیم کنم یا مدل خوشه‌بندی اجرا کنم؟</p>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Prompt Suggestions Bar -->
+                <div class="px-4 py-2 border-top border-secondary border-opacity-25 d-flex gap-2 overflow-x-auto">
+                    <button class="btn btn-outline-dark-custom btn-sm text-nowrap prompt-suggestion">
+                        <i class="bi bi-magic me-1 text-indigo" style="color: var(--primary-accent);"></i> نمودار همبستگی ستون‌ها
+                    </button>
+                    <button class="btn btn-outline-dark-custom btn-sm text-nowrap prompt-suggestion">
+                        <i class="bi bi-exclamation-triangle me-1 text-warning"></i> شناسایی داده‌های پرت (Outliers)
+                    </button>
+                    <button class="btn btn-outline-dark-custom btn-sm text-nowrap prompt-suggestion">
+                        <i class="bi bi-file-earmark-code me-1 text-cyan" style="color: var(--secondary-accent);"></i> کد پایتون برای تحلیل رگرسیون
+                    </button>
+                </div>
+
+                <!-- Chat Input Form -->
+                <div class="p-3 p-md-4 border-top border-secondary border-opacity-25" style="background: var(--bg-surface);">
+                    <form class="d-flex align-items-center gap-2">
+                        <button type="button" class="btn btn-outline-dark-custom p-2 px-3" data-bs-toggle="tooltip" title="ضمیمه کردن فایل جدید">
+                            <i class="bi bi-paperclip fs-5"></i>
+                        </button>
+                        <input type="text" id="chatInputField" class="form-control form-control-dark py-2" placeholder="سوال خود را درباره دیتاست بپرسید..." required>
+                        <button type="submit" class="btn btn-indigo px-4 py-2 d-flex align-items-center gap-2">
+                            <span>ارسال</span>
+                            <i class="bi bi-send-fill"></i>
+                        </button>
+                    </form>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/main.js"></script>
+</body>
+</html>

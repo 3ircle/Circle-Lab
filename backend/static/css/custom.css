@@ -1,0 +1,309 @@
+/* ==========================================================================
+   Custom Dark Theme (Slate & Indigo) for Data Analysis & AI Platform
+   ========================================================================== */
+
+:root {
+  --bg-main: #0F172A;        /* Slate 900 */
+  --bg-surface: #1E293B;     /* Slate 800 */
+  --bg-surface-hover: #334155; /* Slate 700 */
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(99, 102, 241, 0.4);
+
+  --primary-accent: #6366F1; /* Indigo 500 */
+  --primary-hover: #4F46E5;  /* Indigo 600 */
+  --secondary-accent: #22D3EE; /* Cyan 400 */
+  --success-color: #34D399;   /* Emerald 400 */
+  --warning-color: #F59E0B;   /* Amber 500 */
+  --danger-color: #EF4444;    /* Red 500 */
+  --purple-accent: #A855F7;  /* Purple 500 */
+
+  --text-main: #FFFFFF;      /* White */
+  --text-muted: #CBD5E1;     /* Slate 300 - Bright readable light gray */
+  --text-sub: #94A3B8;       /* Slate 400 */
+}
+
+/* Override Bootstrap muted text for dark mode high contrast */
+.text-muted {
+  color: #CBD5E1 !important;
+}
+
+.text-white-50 {
+  color: #E2E8F0 !important;
+}
+
+.form-control-dark::placeholder,
+.form-select-dark::placeholder {
+  color: #94A3B8 !important;
+  opacity: 1;
+}
+
+/* Global Styles */
+body {
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  font-family: 'Vazirmatn', system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-main);
+}
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* Navbar */
+.navbar-dark-custom {
+  background-color: rgba(30, 41, 59, 0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-color);
+  padding: 0.75rem 1.5rem;
+}
+
+.brand-logo {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+}
+
+/* Add Icon Circle for Create New Card */
+.add-icon-circle {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--primary-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.add-icon-circle i {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  margin: 0;
+  padding: 0;
+  height: auto;
+  transform: translateY(1px); /* Perfect visual alignment for Bootstrap icons */
+}
+
+.card-dark:hover .add-icon-circle {
+  background: var(--primary-accent);
+  color: #ffffff;
+  transform: scale(1.1);
+}
+
+/* Card Styling */
+.card-dark {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 1rem;
+  transition: all 0.25s ease-in-out;
+}
+
+.card-dark:hover {
+  border-color: var(--border-hover);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(99, 102, 241, 0.1);
+  transform: translateY(-2px);
+}
+
+.card-header-dark {
+  background-color: transparent;
+  border-bottom: 1px solid var(--border-color);
+  padding: 1.25rem 1.5rem;
+}
+
+/* Buttons */
+.btn-indigo {
+  background-color: var(--primary-accent);
+  color: #ffffff;
+  border: none;
+  font-weight: 500;
+  border-radius: 0.6rem;
+  padding: 0.6rem 1.25rem;
+  transition: all 0.2s ease;
+}
+
+.btn-indigo:hover, .btn-indigo:focus {
+  background-color: var(--primary-hover);
+  color: #ffffff;
+  box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+}
+
+.btn-outline-dark-custom {
+  background-color: transparent;
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+  border-radius: 0.6rem;
+  padding: 0.6rem 1.25rem;
+  transition: all 0.2s ease;
+}
+
+.btn-outline-dark-custom:hover {
+  background-color: var(--bg-surface-hover);
+  border-color: var(--text-muted);
+  color: #ffffff;
+}
+
+/* Form Inputs */
+.form-control-dark, .form-select-dark {
+  background-color: #0F172A;
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  border-radius: 0.6rem;
+  padding: 0.65rem 1rem;
+}
+
+.form-control-dark:focus, .form-select-dark:focus {
+  background-color: #0F172A;
+  border-color: var(--primary-accent);
+  color: var(--text-main);
+  box-shadow: 0 0 0 0.25rem rgba(99, 102, 241, 0.25);
+}
+
+.form-control-dark::placeholder {
+  color: var(--text-sub);
+}
+
+/* Badges & Tags */
+.badge-type {
+  font-size: 0.75rem;
+  padding: 0.35em 0.75em;
+  border-radius: 0.5rem;
+  font-weight: 600;
+}
+.badge-float { background: rgba(34, 211, 238, 0.15); color: #22D3EE; border: 1px solid rgba(34, 211, 238, 0.3); }
+.badge-int { background: rgba(99, 102, 241, 0.15); color: #818CF8; border: 1px solid rgba(99, 102, 241, 0.3); }
+.badge-string { background: rgba(168, 85, 247, 0.15); color: #C084FC; border: 1px solid rgba(168, 85, 247, 0.3); }
+.badge-date { background: rgba(52, 211, 153, 0.15); color: #34D399; border: 1px solid rgba(52, 211, 153, 0.3); }
+
+/* Drag & Drop Upload Zone */
+.dropzone {
+  border: 2px dashed #475569;
+  border-radius: 1rem;
+  background-color: rgba(15, 23, 42, 0.5);
+  padding: 3rem 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.dropzone:hover, .dropzone.dragover {
+  border-color: var(--primary-accent);
+  background-color: rgba(99, 102, 241, 0.05);
+}
+
+/* AI Chat UI */
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 120px);
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.chat-bubble {
+  max-width: 75%;
+  padding: 1rem 1.25rem;
+  border-radius: 1.25rem;
+  line-height: 1.6;
+  position: relative;
+  font-size: 0.95rem;
+}
+
+.chat-bubble-user {
+  align-self: flex-start;
+  background-color: var(--primary-accent);
+  color: #ffffff;
+  border-bottom-right-radius: 0.25rem;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+}
+
+.chat-bubble-ai {
+  align-self: flex-end;
+  background-color: var(--bg-surface);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+  border-bottom-left-radius: 0.25rem;
+}
+
+.ai-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366F1, #22D3EE);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: #475569;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+/* Stat Tile Highlight */
+.stat-tile {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 0.85rem;
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+/* Table Dark Custom */
+.table-dark-custom {
+  --bs-table-bg: var(--bg-surface);
+  --bs-table-color: var(--text-main);
+  --bs-table-border-color: var(--border-color);
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.table-dark-custom th {
+  background-color: #0F172A;
+  color: var(--text-muted);
+  font-weight: 500;
+  border-bottom: 1px solid var(--border-color);
+}

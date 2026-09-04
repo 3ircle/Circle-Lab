@@ -1,0 +1,190 @@
+{% extends 'shared/base.html' %}
+{% load static %}
+
+{% block title %}سامانه تحلیل داده و هوش مصنوعی | پروژه‌ها{% endblock %}
+{% block nav_projects %}active{% endblock %}
+
+{% block content %}
+<main class="container-fluid px-4 py-4 flex-grow-1">
+
+    <!-- Header & Quick Stats -->
+    <div class="row align-items-center mb-4">
+        <div class="col-md-6 mb-3 mb-md-0">
+            <h3 class="fw-bold text-white mb-1">داشبورد مدیریت پروژه‌ها</h3>
+            <p class="text-muted mb-0">دیتاست‌های خود را مدیریت کرده و تحلیل‌های هوشمند دریافت کنید.</p>
+        </div>
+        <div class="col-md-6">
+            <div class="d-flex justify-content-md-end gap-3">
+                <div class="position-relative flex-grow-1 flex-md-grow-0" style="min-width: 250px;">
+                    <input type="text" class="form-control form-control-dark ps-5" placeholder="جستجو در پروژه‌ها...">
+                    <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Summary Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="stat-tile">
+                <div class="stat-icon" style="background: rgba(99, 102, 241, 0.15); color: var(--primary-accent);">
+                    <i class="bi bi-folder-fill"></i>
+                </div>
+                <div>
+                    <div class="text-muted small">کل پروژه‌ها</div>
+                    <div class="fs-4 fw-bold text-white">۱۲ پروژه</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="stat-tile">
+                <div class="stat-icon" style="background: rgba(34, 211, 238, 0.15); color: var(--secondary-accent);">
+                    <i class="bi bi-table"></i>
+                </div>
+                <div>
+                    <div class="text-muted small">مجموع سطرهای پردازش‌شده</div>
+                    <div class="fs-4 fw-bold text-white">۱,۲۴۰,۵۰۰</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="stat-tile">
+                <div class="stat-icon" style="background: rgba(52, 211, 153, 0.15); color: var(--success-color);">
+                    <i class="bi bi-hdd-network-fill"></i>
+                </div>
+                <div>
+                    <div class="text-muted small">حجم داده‌ها</div>
+                    <div class="fs-4 fw-bold text-white">۳۵۰ مگابایت</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="stat-tile">
+                <div class="stat-icon" style="background: rgba(168, 85, 247, 0.15); color: var(--purple-accent);">
+                    <i class="bi bi-chat-quote-fill"></i>
+                </div>
+                <div>
+                    <div class="text-muted small">پرس‌وجوهای AI</div>
+                    <div class="fs-4 fw-bold text-white">۸۴ تحلیل</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Projects Grid -->
+    <h5 class="fw-bold text-white mb-3 d-flex align-items-center gap-2">
+        <i class="bi bi-grid-fill style-icon text-indigo" style="color: var(--primary-accent);"></i>
+        <span>پروژه‌های اخیر</span>
+    </h5>
+
+    <div class="row g-4">
+
+        <!-- Project Card 1 -->
+        <div class="col-12 col-md-6 col-xl-4">
+            <div class="card card-dark h-100">
+                <div class="card-body p-4 d-flex flex-column">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <span class="badge bg-opacity-10 text-cyan bg-info border border-info border-opacity-25 px-2 py-1 rounded-2">CSV Dataset</span>
+                        <div class="dropdown">
+                            <button class="btn btn-link text-muted p-0 border-0" type="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-three-dots-vertical"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-start">
+                                <li><a class="dropdown-item" href="#"><i class="bi bi-pencil me-2"></i>ویرایش نام</a></li>
+                                <li><a class="dropdown-item text-danger" href="#"><i class="bi bi-trash me-2"></i>حذف پروژه</a></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <h5 class="fw-bold text-white mb-2">تحلیل رفتار مشتریان فروشگاه</h5>
+                    <p class="text-muted small mb-4 flex-grow-1">تحلیل خرید، ارزش طول عمر مشتری (CLV) و دسته‌بندی مشتریان در سه ماهه اخیر.</p>
+
+                    <div class="border-top border-secondary border-opacity-25 pt-3 mt-auto">
+                        <div class="row text-center mb-3">
+                            <div class="col-6 border-start border-secondary border-opacity-25">
+                                <span class="text-muted d-block small">تعداد سطرها</span>
+                                <span class="fw-semibold text-white">۴۵,۲۰۰</span>
+                            </div>
+                            <div class="col-6">
+                                <span class="text-muted d-block small">ستون‌ها</span>
+                                <span class="fw-semibold text-white">۱۸ ستون</span>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'processing' %}" class="btn btn-indigo flex-grow-1 btn-sm d-flex align-items-center justify-content-center gap-1">
+                                <i class="bi bi-bar-chart-line-fill"></i>
+                                <span>مشاهده تحلیل</span>
+                            </a>
+                            <a href="{% url 'chat' %}" class="btn btn-outline-dark-custom btn-sm px-3" data-bs-toggle="tooltip" title="گفتگو با هوش مصنوعی">
+                                <i class="bi bi-robot text-cyan" style="color: var(--secondary-accent);"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Project Card 2 -->
+        <div class="col-12 col-md-6 col-xl-4">
+            <div class="card card-dark h-100">
+                <div class="card-body p-4 d-flex flex-column">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <span class="badge bg-opacity-10 text-success bg-success border border-success border-opacity-25 px-2 py-1 rounded-2">XLSX Dataset</span>
+                        <div class="dropdown">
+                            <button class="btn btn-link text-muted p-0 border-0" type="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-three-dots-vertical"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-start">
+                                <li><a class="dropdown-item" href="#"><i class="bi bi-pencil me-2"></i>ویرایش نام</a></li>
+                                <li><a class="dropdown-item text-danger" href="#"><i class="bi bi-trash me-2"></i>حذف پروژه</a></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <h5 class="fw-bold text-white mb-2">پیش‌بینی فروش محصولات نرم‌افزاری</h5>
+                    <p class="text-muted small mb-4 flex-grow-1">بررسی روندهای درآمدی ماهیانه و شناسایی عوامل کلیدی ریزش کاربران.</p>
+
+                    <div class="border-top border-secondary border-opacity-25 pt-3 mt-auto">
+                        <div class="row text-center mb-3">
+                            <div class="col-6 border-start border-secondary border-opacity-25">
+                                <span class="text-muted d-block small">تعداد سطرها</span>
+                                <span class="fw-semibold text-white">۱۲۸,۹۰۰</span>
+                            </div>
+                            <div class="col-6">
+                                <span class="text-muted d-block small">ستون‌ها</span>
+                                <span class="fw-semibold text-white">۳۲ ستون</span>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'processing' %}" class="btn btn-indigo flex-grow-1 btn-sm d-flex align-items-center justify-content-center gap-1">
+                                <i class="bi bi-bar-chart-line-fill"></i>
+                                <span>مشاهده تحلیل</span>
+                            </a>
+                            <a href="{% url 'chat' %}" class="btn btn-outline-dark-custom btn-sm px-3" data-bs-toggle="tooltip" title="گفتگو با هوش مصنوعی">
+                                <i class="bi bi-robot text-cyan" style="color: var(--secondary-accent);"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Project Card 3 (Create New Placeholder) -->
+        <div class="col-12 col-md-6 col-xl-4">
+            <a href="{% url 'new_project' %}" class="card card-dark h-100 text-decoration-none d-flex flex-column align-items-center justify-content-center p-4 text-center" style="border-style: dashed !important; border-width: 2px;">
+                <div class="d-flex flex-column align-items-center justify-content-center py-4">
+                    <div class="add-icon-circle mb-3">
+                        <i class="bi bi-plus-lg fs-3"></i>
+                    </div>
+                    <h6 class="fw-bold text-white mb-1">ایجاد پروژه جدید</h6>
+                    <p class="text-muted small mb-0">دیتاست جدید بارگذاری کنید و تحلیل را شروع کنید</p>
+                </div>
+            </a>
+        </div>
+
+    </div>
+
+</main>
+{% endblock %}
