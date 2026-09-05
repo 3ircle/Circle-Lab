@@ -1,7 +1,13 @@
-
 import csv
+import io
 import os
-from .models import Column
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
+from django.core.files.base import ContentFile
+from .models import Column, Analysis
 
 
 def format_file_size(size_in_bytes):
@@ -15,25 +21,22 @@ def format_file_size(size_in_bytes):
 
 
 def infer_data_type(value_str):
-    if not value_str or value_str.strip() == "":
+    if not value_str or str(value_str).strip() == "":
         return None
-    val = value_str.strip()
+    val = str(value_str).strip()
 
-    # Try Integer
     try:
         int(val)
         return "عدد صحیح (Integer)"
     except ValueError:
         pass
 
-    # Try Float
     try:
         float(val)
         return "عدد اعشاری (Float)"
     except ValueError:
         pass
 
-    # Try Boolean
     if val.lower() in ["true", "false", "بله", "خیر", "1", "0"]:
         return "منطقی (Boolean)"
 
@@ -50,9 +53,8 @@ def process_dataset_file(dataset):
 
     ext = os.path.splitext(file_path)[1].lower()
 
-    if ext == ".csv":
+    if ext in [".csv", ".txt"]:
         try:
-            # سعی در خواندن فایل CSV با انکودینگ‌های متداول
             encoding = "utf-8-sig"
             try:
                 with open(file_path, "r", encoding=encoding) as f:
@@ -61,7 +63,6 @@ def process_dataset_file(dataset):
                 encoding = "utf-8"
 
             with open(file_path, "r", encoding=encoding, errors="replace") as f:
-                # تشخص خودکار separator در صورت امکان
                 sample = f.read(4096)
                 f.seek(0)
 
@@ -80,7 +81,6 @@ def process_dataset_file(dataset):
 
                 headers = [h.strip() if h else f"Column_{i+1}" for i, h in enumerate(headers)]
 
-                # بررسی ۵۰ سطر اول جهت تشخیص نوع داده هر ستون
                 sample_rows = []
                 record_count = 0
                 for row in reader:
@@ -91,7 +91,6 @@ def process_dataset_file(dataset):
                 dataset.record_count = record_count
                 dataset.save()
 
-                # استخراج نوع داده ستون‌ها
                 for col_idx, col_name in enumerate(headers):
                     types_found = set()
                     for row in sample_rows:
@@ -101,7 +100,6 @@ def process_dataset_file(dataset):
                             if inferred:
                                 types_found.add(inferred)
 
-                    # تعیین نوع نهایی
                     if "رشته متنی (String)" in types_found:
                         final_type = "رشته متنی (String)"
                     elif "عدد اعشاری (Float)" in types_found:
@@ -122,3 +120,45 @@ def process_dataset_file(dataset):
         except Exception as e:
             print(f"Error processing CSV dataset: {e}")
 
+
+def generate_seaborn_chart(df, col_name, data_type):
+    """
+    تولید نمودار با Seaborn با استایل Dark Mode کاستوم متناسب با CircleLab
+    """
+    fig, ax = plt.subplots(figsize=(6, 3.2), dpi=100)
+
+    # Dark Theme Colors
+    fig.patch.set_facecolor('#1E293B')
+    ax.set_facecolor('#1E293B')
+    ax.tick_params(colors='#CBD5E1', labelsize=8)
+    ax.xaxis.label.set_color('#CBD5E1')
+    ax.yaxis.label.set_color('#CBD5E1')
+    ax.title.set_color('#FFFFFF')
+    for spine in ax.spines.values():
+        spine.set_color('#334155')
+
+    ax.grid(True, linestyle='--', alpha=0.2, color='#CBD5E1')
+
+    series = df[col_name].dropna()
+
+    if data_type in ["عدد صحیح (Integer)", "عدد اعشاری (Float)"]:
+        numeric_series = pd.to_numeric(series, errors='coerce').dropna()
+        if not numeric_series.empty:
+            sns.histplot(numeric_series, kde=True, ax=ax, color='#22D3EE', edgecolor='#0F172A', alpha=0.7)
+            ax.set_ylabel('فراوانی', fontname='DejaVu Sans', fontsize=9)
+    else:
+        counts = series.astype(str).value_counts().head(8)
+        if not counts.empty:
+            palette = ['#6366F1', '#22D3EE', '#A855F7', '#34D399', '#F59E0B', '#EF4444', '#818CF8', '#C084FC']
+            sns.barplot(x=counts.index, y=counts.values, ax=ax, palette=palette[:len(counts)], hue=counts.index, legend=False)
+            ax.set_ylabel('تعداد', fontname='DejaVu Sans', fontsize=9)
+            plt.xticks(rotation=25, ha='right')
+
+    ax.set_xlabel(col_name, fontsize=9)
+    plt.tight_layout()
+
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png', facecolor=fig.get_facecolor(), edgecolor='none')
+    plt.close(fig)
+    buf.seek(0)
+    return buf

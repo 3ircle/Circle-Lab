@@ -1,29 +1,15 @@
 {% extends 'shared/base.html' %}
 {% load static %}
 
-{% block title %}سامانه تحلیل داده | صفحه پردازش و آمار ستون‌ها{% endblock %}
+{% block title %}سامانه تحلیل داده | {{ project.name }}{% endblock %}
 
 {% block navbar_extra %}
 <div class="d-flex align-items-center gap-2">
-    <a href="{% url 'chat' %}" class="btn btn-outline-dark-custom d-flex align-items-center gap-2">
+    <a href="" class="btn btn-outline-dark-custom d-flex align-items-center gap-2">
         <i class="bi bi-chat-quote-fill text-cyan" style="color: var(--secondary-accent);"></i>
         <span>چت با AI درباره این دیتاست</span>
     </a>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="{% static 'js/charts.js' %}"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        // Render Sample Charts for Columns
-        renderColumnChart('chartColumn1', 'bar', ['100k-500k', '500k-1M', '1M-2M', '2M-5M', '5M+'], [4500, 12000, 18500, 8200, 2000], '#22D3EE');
-        renderColumnChart('chartColumn2', 'bar', ['تهران', 'اصفهان', 'مشهد', 'شیراز', 'تبریز'], [16000, 9500, 8200, 6100, 5400], '#A855F7');
-        renderColumnChart('chartColumn3', 'bar', ['18-24', '25-34', '35-44', '45-54', '55+'], [6200, 19500, 12400, 5100, 2000], '#6366F1');
-    });
-</script>
 {% endblock %}
 
 {% block content %}
@@ -34,65 +20,56 @@
         <div>
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb mb-1 small text-muted">
-                    <li class="breadcrumb-item"><a href="{% url 'index' %}" class="text-decoration-none text-muted">پروژه‌ها</a></li>
-                    <li class="breadcrumb-item active text-white" aria-current="page">تحلیل رفتار مشتریان فروشگاه</li>
+                    <li class="breadcrumb-item"><a href="{% url 'index-page' %}" class="text-decoration-none text-muted">پروژه‌ها</a></li>
+                    <li class="breadcrumb-item active text-white" aria-current="page">{{ project.name }}</li>
                 </ol>
             </nav>
-            <h3 class="fw-bold text-white mb-0">گزارش آماری و پردازش ستون‌ها</h3>
+            <h3 class="fw-bold text-white mb-0">گزارش آماری و تحلیل ستون‌ها</h3>
         </div>
-        <div class="d-flex gap-2">
-            <button class="btn btn-outline-dark-custom btn-sm"><i class="bi bi-download me-1"></i> خروجی گزارش (PDF)</button>
-            <button class="btn btn-indigo btn-sm"><i class="bi bi-arrow-repeat me-1"></i> بازپردازش داده‌ها</button>
+        <div class="d-flex align-items-center gap-3 bg-dark p-2 px-3 rounded-3 border border-secondary border-opacity-25">
+            <div class="d-flex align-items-center gap-2">
+                <label for="samplePercentSlider" class="form-label text-white small mb-0 fw-semibold">درصد داده‌ها:</label>
+                <input type="range" class="form-range" id="samplePercentSlider" min="1" max="100" value="100" style="width: 130px;">
+                <span id="samplePercentBadge" class="badge bg-indigo px-2 py-1 fs-6">۱۰۰٪</span>
+            </div>
+            <button id="runAnalysisBtn" class="btn btn-indigo btn-sm d-flex align-items-center gap-2" onclick="runAnalysis()">
+                <i class="bi bi-play-circle-fill fs-6"></i>
+                <span id="runAnalysisBtnText">شروع / بازپردازش تحلیل</span>
+            </button>
         </div>
     </div>
 
     <!-- Dataset Summary Cards Bar -->
     <div class="row g-3 mb-4">
-        <div class="col-6 col-md-4 col-xl-2">
+        <div class="col-6 col-md-4 col-xl-3">
             <div class="stat-tile">
                 <div>
                     <div class="text-muted small">تعداد سطرها</div>
-                    <div class="fs-5 fw-bold text-white">۴۵,۲۰۰</div>
+                    <div class="fs-5 fw-bold text-white" id="statRecordCount">{{ dataset.record_count|default:0 }}</div>
                 </div>
             </div>
         </div>
-        <div class="col-6 col-md-4 col-xl-2">
+        <div class="col-6 col-md-4 col-xl-3">
             <div class="stat-tile">
                 <div>
                     <div class="text-muted small">تعداد ستون‌ها</div>
-                    <div class="fs-5 fw-bold text-white">۱۸ ستون</div>
+                    <div class="fs-5 fw-bold text-white">{{ columns|length }} ستون</div>
                 </div>
             </div>
         </div>
-        <div class="col-6 col-md-4 col-xl-2">
+        <div class="col-6 col-md-4 col-xl-3">
             <div class="stat-tile">
                 <div>
                     <div class="text-muted small">حجم حافظه</div>
-                    <div class="fs-5 fw-bold text-white">۶.۴ مگابایت</div>
+                    <div class="fs-5 fw-bold text-white">{{ file_size_formatted }}</div>
                 </div>
             </div>
         </div>
-        <div class="col-6 col-md-4 col-xl-2">
+        <div class="col-6 col-md-4 col-xl-3">
             <div class="stat-tile">
                 <div>
-                    <div class="text-muted small">مقادیر مفقود (Missing)</div>
-                    <div class="fs-5 fw-bold text-warning">۱.۲٪ (۵۴۲ سطر)</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-md-4 col-xl-2">
-            <div class="stat-tile">
-                <div>
-                    <div class="text-muted small">ستون‌های عددی</div>
-                    <div class="fs-5 fw-bold text-cyan" style="color: var(--secondary-accent);">۱۲ ستون</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-md-4 col-xl-2">
-            <div class="stat-tile">
-                <div>
-                    <div class="text-muted small">ستون‌های متنی/دسته‌ای</div>
-                    <div class="fs-5 fw-bold text-purple" style="color: var(--purple-accent);">۶ ستون</div>
+                    <div class="text-muted small">درصد نمونه‌برداری فعلی</div>
+                    <div class="fs-5 fw-bold text-cyan" id="statSamplePercent" style="color: var(--secondary-accent);">۱۰۰٪</div>
                 </div>
             </div>
         </div>
@@ -104,153 +81,224 @@
             <i class="bi bi-layout-three-columns" style="color: var(--primary-accent);"></i>
             <span>تحلیل تفکیکی ستون‌ها</span>
         </h5>
-        <div class="d-flex gap-2">
-            <input type="text" class="form-control form-control-dark form-control-sm" placeholder="جستجوی ستون..." style="width: 200px;">
-            <select class="form-select form-select-dark form-select-sm" style="width: 160px;">
-                <option value="all">همه انواع ستون‌ها</option>
-                <option value="num">عددی (Numerical)</option>
-                <option value="cat">متنی (Categorical)</option>
-            </select>
-        </div>
     </div>
 
     <!-- Columns Grid -->
-    <div class="row g-4">
-
-        <!-- Column Card 1 (Numerical: Total Purchase Value) -->
-        <div class="col-12 col-lg-6 col-xl-4">
-            <div class="card card-dark h-100">
-                <div class="card-header-dark d-flex align-items-center justify-content-between">
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="bi bi-123 text-cyan fs-5" style="color: var(--secondary-accent);"></i>
-                        <span class="fw-bold text-white">Total_Purchase_Amount</span>
-                    </div>
-                    <span class="badge badge-type badge-float">float64</span>
-                </div>
-                <div class="card-body p-3">
-                    <!-- Stats Mini Table -->
-                    <div class="table-responsive mb-3">
-                        <table class="table table-sm table-dark-custom mb-0 small">
-                            <tbody>
-                                <tr>
-                                    <td class="text-muted">میانگین (Mean):</td>
-                                    <td class="fw-semibold text-end text-white">۲,۴۵۰,۰۰۰ تومان</td>
-                                </tr>
-                                <tr>
-                                    <td class="text-muted">میانه (Median):</td>
-                                    <td class="fw-semibold text-end text-white">۱,۹۸۰,۰۰۰ تومان</td>
-                                </tr>
-                                <tr>
-                                    <td class="text-muted">انحراف معیار (Std):</td>
-                                    <td class="fw-semibold text-end text-white">۴۲۰,۰۰۰</td>
-                                </tr>
-                                <tr>
-                                    <td class="text-muted">داده‌های یونیک (Unique):</td>
-                                    <td class="fw-semibold text-end text-white">۱۲,۳4۰</td>
-                                </tr>
-                                <tr>
-                                    <td class="text-muted">مقادیر خالی (Null):</td>
-                                    <td class="fw-semibold text-end text-success">۰٪ (۰ سطر)</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <!-- Chart Container -->
-                    <div class="text-muted small mb-1"><i class="bi bi-bar-chart-fill me-1"></i>نمودار توزیع فراوانی (Distribution)</div>
-                    <div style="height: 160px; position: relative;">
-                        <canvas id="chartColumn1"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Column Card 2 (Categorical: Customer Location / Region) -->
-        <div class="col-12 col-lg-6 col-xl-4">
-            <div class="card card-dark h-100">
-                <div class="card-header-dark d-flex align-items-center justify-content-between">
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="bi bi-fonts text-purple fs-5" style="color: var(--purple-accent);"></i>
-                        <span class="fw-bold text-white">Customer_Region</span>
-                    </div>
-                    <span class="badge badge-type badge-string">object</span>
-                </div>
-                <div class="card-body p-3">
-                    <!-- Stats Mini Table -->
-                    <div class="table-responsive mb-3">
-                        <table class="table table-sm table-dark-custom mb-0 small">
-                            <tbody>
-                                <tr>
-                                    <td class="text-muted">مد (Most Frequent):</td>
-                                    <td class="fw-semibold text-end text-white">تهران (۳۸٪)</td>
-                                </tr>
-                                <tr>
-                                    <td class="text-muted">داده‌های یونیک (Unique):</td>
-                                    <td class="fw-semibold text-end text-white">۵ منطقه</td>
-                                </tr>
-                                <tr>
-                                    <td class="text-muted">مقادیر خالی (Null):</td>
-                                    <td class="fw-semibold text-end text-warning">۱.۵٪ (۶۷۸ سطر)</td>
-                                </tr>
-                                <tr>
-                                    <td class="text-muted">دسته پیشتاز:</td>
-                                    <td class="fw-semibold text-end text-white">منطقه شمال</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <!-- Chart Container -->
-                    <div class="text-muted small mb-1"><i class="bi bi-pie-chart-fill me-1"></i>فراوانی دسته‌ها</div>
-                    <div style="height: 160px; position: relative;">
-                        <canvas id="chartColumn2"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Column Card 3 (Numerical: Customer Age) -->
-        <div class="col-12 col-lg-6 col-xl-4">
+    <div class="row g-4" id="columnsContainer">
+        {% for col in columns %}
+        <div class="col-12 col-lg-6 col-xl-4 column-card-item">
             <div class="card card-dark h-100">
                 <div class="card-header-dark d-flex align-items-center justify-content-between">
                     <div class="d-flex align-items-center gap-2">
                         <i class="bi bi-hash text-indigo fs-5" style="color: var(--primary-accent);"></i>
-                        <span class="fw-bold text-white">Customer_Age</span>
+                        <span class="fw-bold text-white">{{ col.name }}</span>
                     </div>
-                    <span class="badge badge-type badge-int">int64</span>
+                    <span class="badge badge-type badge-int">{{ col.data_type }}</span>
                 </div>
-                <div class="card-body p-3">
+                <div class="card-body p-3 d-flex flex-column justify-content-between">
+                    {% with analysis=col.analyses.last %}
+                    {% if analysis %}
                     <!-- Stats Mini Table -->
                     <div class="table-responsive mb-3">
                         <table class="table table-sm table-dark-custom mb-0 small">
                             <tbody>
+                                {% if analysis.mean is not None %}
                                 <tr>
                                     <td class="text-muted">میانگین (Mean):</td>
-                                    <td class="fw-semibold text-end text-white">۳۴.۲ سال</td>
+                                    <td class="fw-semibold text-end text-white">{{ analysis.mean|floatformat:2 }}</td>
                                 </tr>
+                                {% endif %}
+                                {% if analysis.median is not None %}
                                 <tr>
                                     <td class="text-muted">میانه (Median):</td>
-                                    <td class="fw-semibold text-end text-white">۳۲ سال</td>
+                                    <td class="fw-semibold text-end text-white">{{ analysis.median|floatformat:2 }}</td>
                                 </tr>
+                                {% endif %}
+                                {% if analysis.mode %}
                                 <tr>
-                                    <td class="text-muted">کمترین / بیشترین:</td>
-                                    <td class="fw-semibold text-end text-white">۱۸ تا ۶۵ سال</td>
+                                    <td class="text-muted">مد (Mode):</td>
+                                    <td class="fw-semibold text-end text-white">{{ analysis.mode }}</td>
                                 </tr>
+                                {% endif %}
                                 <tr>
-                                    <td class="text-muted">مقادیر خالی (Null):</td>
-                                    <td class="fw-semibold text-end text-success">۰٪ (۰)</td>
+                                    <td class="text-muted">داده‌های یونیک (Unique):</td>
+                                    <td class="fw-semibold text-end text-white">{{ analysis.value_counts }}</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                     <!-- Chart Container -->
-                    <div class="text-muted small mb-1"><i class="bi bi-bar-chart-line-fill me-1"></i>توزیع سنی مخاطبان</div>
-                    <div style="height: 160px; position: relative;">
-                        <canvas id="chartColumn3"></canvas>
+                    <div class="text-muted small mb-2"><i class="bi bi-bar-chart-fill me-1"></i>نمودار توزیع فراوانی (Seaborn)</div>
+                    <div class="text-center">
+                        {% if analysis.visualization %}
+                        <img src="{{ analysis.visualization.url }}" alt="{{ col.name }}" class="img-fluid rounded border border-secondary border-opacity-25" style="max-height: 220px; object-fit: contain;">
+                        {% else %}
+                        <div class="text-muted p-4 border border-secondary border-dashed rounded">نمودار تولید نشده است</div>
+                        {% endif %}
                     </div>
+                    {% else %}
+                    <div class="text-center p-4">
+                        <i class="bi bi-bar-chart fs-1 text-muted d-block mb-2"></i>
+                        <p class="text-muted small mb-0">هنوز تحلیلی برای این ستون ثبت نشده است.</p>
+                        <p class="text-muted extra-small">جهت تولید آمار و نمودار روی «شروع / بازپردازش تحلیل» کلیک کنید.</p>
+                    </div>
+                    {% endif %}
+                    {% endwith %}
                 </div>
             </div>
         </div>
-
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <p class="text-muted">هیچ ستونی برای این دیتاست یافت نشد.</p>
+        </div>
+        {% endfor %}
     </div>
 
 </main>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const projectId = "{{ project.id }}";
+const analyzeApiUrl = "{% url 'run-analysis-api' project.id %}";
+
+document.addEventListener('DOMContentLoaded', function () {
+    const slider = document.getElementById('samplePercentSlider');
+    const badge = document.getElementById('samplePercentBadge');
+
+    if (slider && badge) {
+        slider.addEventListener('input', function () {
+            badge.textContent = slider.value + '٪';
+        });
+    }
+});
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function runAnalysis() {
+    const slider = document.getElementById('samplePercentSlider');
+    const samplePercent = slider ? slider.value : 100;
+    const btn = document.getElementById('runAnalysisBtn');
+    const btnText = document.getElementById('runAnalysisBtnText');
+
+    btn.disabled = true;
+    btnText.textContent = 'در حال تحلیل داده‌ها...';
+
+    const csrftoken = getCookie('csrftoken');
+
+    fetch(analyzeApiUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken,
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({ sample_percent: parseInt(samplePercent) })
+    })
+    .then(response => response.json())
+    .then(data => {
+        btn.disabled = false;
+        btnText.textContent = 'شروع / بازپردازش تحلیل';
+
+        if (data.error) {
+            alert(data.error);
+            return;
+        }
+
+        document.getElementById('statSamplePercent').textContent = data.sample_percent + '٪';
+        if (data.sampled_records) {
+            document.getElementById('statRecordCount').textContent = data.sampled_records;
+        }
+
+        renderColumns(data.columns);
+    })
+    .catch(err => {
+        btn.disabled = false;
+        btnText.textContent = 'شروع / بازپردازش تحلیل';
+        console.error('Analysis error:', err);
+        alert('خطایی در اجرای تحلیل رخ داد.');
+    });
+}
+
+function renderColumns(columns) {
+    const container = document.getElementById('columnsContainer');
+    container.innerHTML = '';
+
+    columns.forEach(col => {
+        const analysis = col.analysis;
+        const colDiv = document.createElement('div');
+        colDiv.className = 'col-12 col-lg-6 col-xl-4 column-card-item';
+
+        let bodyContent = '';
+        if (analysis) {
+            let statsRows = '';
+            if (analysis.mean !== null && analysis.mean !== undefined) {
+                statsRows += `<tr><td class="text-muted">میانگین (Mean):</td><td class="fw-semibold text-end text-white">${parseFloat(analysis.mean).toFixed(2)}</td></tr>`;
+            }
+            if (analysis.median !== null && analysis.median !== undefined) {
+                statsRows += `<tr><td class="text-muted">میانه (Median):</td><td class="fw-semibold text-end text-white">${parseFloat(analysis.median).toFixed(2)}</td></tr>`;
+            }
+            if (analysis.mode) {
+                statsRows += `<tr><td class="text-muted">مد (Mode):</td><td class="fw-semibold text-end text-white">${escapeHtml(analysis.mode)}</td></tr>`;
+            }
+            statsRows += `<tr><td class="text-muted">داده‌های یونیک (Unique):</td><td class="fw-semibold text-end text-white">${analysis.value_counts || 0}</td></tr>`;
+
+            let imgHtml = analysis.visualization ?
+                `<img src="${analysis.visualization}" alt="${escapeHtml(col.name)}" class="img-fluid rounded border border-secondary border-opacity-25" style="max-height: 220px; object-fit: contain;">` :
+                `<div class="text-muted p-4 border border-secondary border-dashed rounded">نمودار تولید نشده است</div>`;
+
+            bodyContent = `
+                <div class="table-responsive mb-3">
+                    <table class="table table-sm table-dark-custom mb-0 small">
+                        <tbody>${statsRows}</tbody>
+                    </table>
+                </div>
+                <div class="text-muted small mb-2"><i class="bi bi-bar-chart-fill me-1"></i>نمودار توزیع فراوانی (Seaborn)</div>
+                <div class="text-center">${imgHtml}</div>
+            `;
+        } else {
+            bodyContent = `
+                <div class="text-center p-4">
+                    <i class="bi bi-bar-chart fs-1 text-muted d-block mb-2"></i>
+                    <p class="text-muted small mb-0">هنوز تحلیلی برای این ستون ثبت نشده است.</p>
+                </div>
+            `;
+        }
+
+        colDiv.innerHTML = `
+            <div class="card card-dark h-100">
+                <div class="card-header-dark d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-hash text-indigo fs-5" style="color: var(--primary-accent);"></i>
+                        <span class="fw-bold text-white">${escapeHtml(col.name)}</span>
+                    </div>
+                    <span class="badge badge-type badge-int">${escapeHtml(col.data_type)}</span>
+                </div>
+                <div class="card-body p-3 d-flex flex-column justify-content-between">
+                    ${bodyContent}
+                </div>
+            </div>
+        `;
+        container.appendChild(colDiv);
+    });
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+</script>
 {% endblock %}

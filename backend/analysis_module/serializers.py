@@ -1,11 +1,25 @@
 from rest_framework import serializers
-from .models import Project, DataSet, Column
+from .models import Project, DataSet, Column, Analysis
+
+
+class AnalysisSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Analysis
+        fields = ['id', 'column', 'mean', 'median', 'mode', 'value_counts', 'visualization']
 
 
 class ColumnSerializer(serializers.ModelSerializer):
+    analysis = serializers.SerializerMethodField()
+
     class Meta:
         model = Column
-        fields = ['id', 'name', 'data_type']
+        fields = ['id', 'name', 'data_type', 'analysis']
+
+    def get_analysis(self, obj):
+        analysis = obj.analyses.last()
+        if analysis:
+            return AnalysisSerializer(analysis, context=self.context).data
+        return None
 
 
 class DataSetSerializer(serializers.ModelSerializer):
