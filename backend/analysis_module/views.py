@@ -127,14 +127,17 @@ class DeleteProjectView(generics.DestroyAPIView):
         return self.destroy(request, *args, **kwargs)
 
 
-class RunAnalysisAPIView(APIView):
+class AnalyzeSingleColumnAPIView(APIView):
+    """
+    تحلیل تک‌ستون به صورت جداگانه (زنده / Streaming)
+    """
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, pk, *args, **kwargs):
-        project = get_object_or_404(Project, pk=pk, user=request.user)
-        dataset = getattr(project, "dataset", None)
+        column = get_object_or_404(Column, pk=pk, dataset__project__user=request.user)
+        dataset = column.dataset
         if not dataset or not dataset.file:
-            return Response({"error": "دیتاستی برای این پروژه یافت نشد."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "دیتاستی یافت نشد."}, status=status.HTTP_400_BAD_REQUEST)
 
         sample_percent = request.data.get("sample_percent", 100)
         try:
@@ -149,7 +152,6 @@ class RunAnalysisAPIView(APIView):
             return Response({"error": "فایل دیتاست یافت نشد."}, status=status.HTTP_404_NOT_FOUND)
 
         try:
-            # خواندن CSV با پانداز
             try:
                 df = pd.read_csv(file_path, encoding='utf-8-sig')
             except Exception:
@@ -160,59 +162,65 @@ class RunAnalysisAPIView(APIView):
             else:
                 df_sampled = df
 
-            columns = dataset.columns.all()
+            col_name = column.name
+            if col_name not in df_sampled.columns:
+                return Response({"error": f"ستون {col_name} در فایل یافت نشد."}, status=status.HTTP_400_BAD_REQUEST)
 
-            for column in columns:
-                # حذف تحلیل‌های قبلی این ستون
-                column.analyses.all().delete()
+            # حذف تحلیل قبلی این ستون
+            column.analyses.all().delete()
 
-                col_name = column.name
-                if col_name not in df_sampled.columns:
-                    continue
+            series = df_sampled[col_name]
+            mean_val = None
+            median_val = None
+            mode_val = None
+            unique_counts = int(series.nunique())
 
-                series = df_sampled[col_name]
-                mean_val = None
-                median_val = None
-                mode_val = None
-                unique_counts = int(series.nunique())
-
-                if column.data_type in ["عدد صحیح (Integer)", "عدد اعشاری (Float)"]:
-                    numeric_series = pd.to_numeric(series, errors='coerce').dropna()
-                    if not numeric_series.empty:
-                        mean_val = float(numeric_series.mean())
-                        median_val = float(numeric_series.median())
-                        mode_series = numeric_series.mode()
-                        if not mode_series.empty:
-                            mode_val = str(round(mode_series.iloc[0], 2))
-                else:
-                    mode_series = series.mode()
+            if column.data_type in ["عدد صحیح (Integer)", "عدد اعشاری (Float)"]:
+                numeric_series = pd.to_numeric(series, errors='coerce').dropna()
+                if not numeric_series.empty:
+                    mean_val = float(numeric_series.mean())
+                    median_val = float(numeric_series.median())
+                    mode_series = numeric_series.mode()
                     if not mode_series.empty:
-                        mode_val = str(mode_series.iloc[0])
+                        mode_val = str(round(mode_series.iloc[0], 2))
+            else:
+                mode_series = series.mode()
+                if not mode_series.empty:
+                    mode_val = str(mode_series.iloc[0])
 
-                # ساخت نمودار Seaborn
-                chart_buf = generate_seaborn_chart(df_sampled, col_name, column.data_type)
+            # ساخت نمودار Seaborn
+            chart_buf = generate_seaborn_chart(df_sampled, col_name, column.data_type)
 
-                analysis = Analysis.objects.create(
-                    column=column,
-                    mean=mean_val,
-                    median=median_val,
-                    mode=mode_val,
-                    value_counts=unique_counts
-                )
-                filename = f"chart_col_{column.id}_sample_{sample_percent}.png"
-                analysis.visualization.save(filename, ContentFile(chart_buf.getvalue()), save=True)
+            analysis = Analysis.objects.create(
+                column=column,
+                mean=mean_val,
+                median=median_val,
+                mode=mode_val,
+                value_counts=unique_counts
+            )
+            filename = f"chart_col_{column.id}_sample_{sample_percent}.png"
+            analysis.visualization.save(filename, ContentFile(chart_buf.getvalue()), save=True)
 
-            # بازگرداندن تمام ستون‌ها همراه با تحلیل ساخت جدید
-            updated_columns = ColumnSerializer(columns, many=True, context={'request': request}).data
+            column_data = ColumnSerializer(column, context={'request': request}).data
             return Response({
-                "message": "تحلیل با موفقیت انجام شد.",
-                "sample_percent": sample_percent,
-                "sampled_records": len(df_sampled),
-                "columns": updated_columns
+                "column": column_data,
+                "sampled_records": len(df_sampled)
             }, status=status.HTTP_200_OK)
 
         except Exception as e:
-            return Response({"error": f"خطا در پردازش تحلیل: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"error": f"خطا در تحلیل ستون: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class ClearProjectAnalysesAPIView(APIView):
+    """
+    پاکسازی تمام تحلیل‌های قبلی پروژه پیش از شروع تحلیل زنده جدید
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk, *args, **kwargs):
+        project = get_object_or_404(Project, pk=pk, user=request.user)
+        Analysis.objects.filter(column__dataset__project=project).delete()
+        return Response({"message": "تمام تحلیل‌های قبلی پاکسازی شدند."}, status=status.HTTP_200_OK)
 
 
 class ColumnAnalysisAPIView(APIView):
@@ -222,7 +230,7 @@ class ColumnAnalysisAPIView(APIView):
         column = get_object_or_404(Column, pk=pk, dataset__project__user=request.user)
         analysis = column.analyses.last()
         if not analysis:
-            return Response({"error": "تحلیلی برای این ستون ثبت نشده است."}, status=status.HTTP_44_NOT_FOUND)
+            return Response({"error": "تحلیلی برای این ستون ثبت نشده است."}, status=status.HTTP_404_NOT_FOUND)
 
         serializer = AnalysisSerializer(analysis, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)

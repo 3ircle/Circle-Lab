@@ -32,7 +32,7 @@
                 <input type="range" class="form-range" id="samplePercentSlider" min="1" max="100" value="100" style="width: 130px;">
                 <span id="samplePercentBadge" class="badge bg-indigo px-2 py-1 fs-6">۱۰۰٪</span>
             </div>
-            <button id="runAnalysisBtn" class="btn btn-indigo btn-sm d-flex align-items-center gap-2" onclick="runAnalysis()">
+            <button id="runAnalysisBtn" class="btn btn-indigo btn-sm d-flex align-items-center gap-2" onclick="startLiveAnalysis()">
                 <i class="bi bi-play-circle-fill fs-6"></i>
                 <span id="runAnalysisBtnText">شروع / بازپردازش تحلیل</span>
             </button>
@@ -81,12 +81,13 @@
             <i class="bi bi-layout-three-columns" style="color: var(--primary-accent);"></i>
             <span>تحلیل تفکیکی ستون‌ها</span>
         </h5>
+        <div id="analysisProgressText" class="text-info small fw-semibold"></div>
     </div>
 
     <!-- Columns Grid -->
     <div class="row g-4" id="columnsContainer">
         {% for col in columns %}
-        <div class="col-12 col-lg-6 col-xl-4 column-card-item">
+        <div class="col-12 col-lg-6 col-xl-4 column-card-item" id="column-card-{{ col.id }}" data-column-id="{{ col.id }}">
             <div class="card card-dark h-100">
                 <div class="card-header-dark d-flex align-items-center justify-content-between">
                     <div class="d-flex align-items-center gap-2">
@@ -95,7 +96,7 @@
                     </div>
                     <span class="badge badge-type badge-int">{{ col.data_type }}</span>
                 </div>
-                <div class="card-body p-3 d-flex flex-column justify-content-between">
+                <div class="card-body p-3 d-flex flex-column justify-content-between column-card-body">
                     {% with analysis=col.analyses.last %}
                     {% if analysis %}
                     <!-- Stats Mini Table -->
@@ -160,7 +161,7 @@
 {% block extra_js %}
 <script>
 const projectId = "{{ project.id }}";
-const analyzeApiUrl = "{% url 'run-analysis-api' project.id %}";
+const clearAnalysesUrl = "{% url 'clear-project-analyses-api' project.id %}";
 
 document.addEventListener('DOMContentLoaded', function () {
     const slider = document.getElementById('samplePercentSlider');
@@ -188,112 +189,138 @@ function getCookie(name) {
     return cookieValue;
 }
 
-function runAnalysis() {
+async function startLiveAnalysis() {
     const slider = document.getElementById('samplePercentSlider');
-    const samplePercent = slider ? slider.value : 100;
+    const samplePercent = slider ? parseInt(slider.value) : 100;
     const btn = document.getElementById('runAnalysisBtn');
     const btnText = document.getElementById('runAnalysisBtnText');
-
-    btn.disabled = true;
-    btnText.textContent = 'در حال تحلیل داده‌ها...';
-
+    const progressText = document.getElementById('analysisProgressText');
     const csrftoken = getCookie('csrftoken');
 
-    fetch(analyzeApiUrl, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrftoken,
-            'X-Requested-With': 'XMLHttpRequest'
-        },
-        body: JSON.stringify({ sample_percent: parseInt(samplePercent) })
-    })
-    .then(response => response.json())
-    .then(data => {
-        btn.disabled = false;
-        btnText.textContent = 'شروع / بازپردازش تحلیل';
+    btn.disabled = true;
+    btnText.textContent = 'در حال پردازش...';
 
-        if (data.error) {
-            alert(data.error);
-            return;
+    // ۱. پاکسازی کارت‌های فرانت و دیتابیس
+    try {
+        await fetch(clearAnalysesUrl, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken,
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+    } catch (e) {
+        console.error('Clear error:', e);
+    }
+
+    // پاکسازی ظاهر تمام کارت‌ها به حالت اسکلت یا Loading
+    const cardElements = document.querySelectorAll('.column-card-item');
+    cardElements.forEach(card => {
+        const cardBody = card.querySelector('.column-card-body');
+        if (cardBody) {
+            cardBody.innerHTML = `
+                <div class="text-center py-4">
+                    <div class="spinner-border text-cyan mb-2" role="status" style="width: 2rem; height: 2rem; color: var(--secondary-accent);"></div>
+                    <div class="text-muted small">در انتظار تحلیل...</div>
+                </div>
+            `;
         }
-
-        document.getElementById('statSamplePercent').textContent = data.sample_percent + '٪';
-        if (data.sampled_records) {
-            document.getElementById('statRecordCount').textContent = data.sampled_records;
-        }
-
-        renderColumns(data.columns);
-    })
-    .catch(err => {
-        btn.disabled = false;
-        btnText.textContent = 'شروع / بازپردازش تحلیل';
-        console.error('Analysis error:', err);
-        alert('خطایی در اجرای تحلیل رخ داد.');
     });
+
+    const columnIds = Array.from(cardElements).map(el => el.getAttribute('data-column-id')).filter(Boolean);
+    let completedCount = 0;
+
+    // ۲. اجرای تحلیل برای هر ستون به صورت زنده تک به تک
+    for (let i = 0; i < columnIds.length; i++) {
+        const colId = columnIds[i];
+        if (progressText) {
+            progressText.textContent = `در حال تحلیل ستون ${i + 1} از ${columnIds.length}...`;
+        }
+
+        try {
+            const res = await fetch(`/api/columns/${colId}/analyze-single/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ sample_percent: samplePercent })
+            });
+
+            const data = await res.json();
+            if (res.ok && data.column) {
+                renderSingleColumnCard(data.column);
+                completedCount++;
+                document.getElementById('statSamplePercent').textContent = samplePercent + '٪';
+                if (data.sampled_records) {
+                    document.getElementById('statRecordCount').textContent = data.sampled_records;
+                }
+            } else {
+                renderErrorColumnCard(colId, data.error || 'خطا در تحلیل ستون');
+            }
+        } catch (err) {
+            console.error(`Error analyzing column ${colId}:`, err);
+            renderErrorColumnCard(colId, 'خطا در برقراری ارتباط');
+        }
+    }
+
+    btn.disabled = false;
+    btnText.textContent = 'شروع / بازپردازش تحلیل';
+    if (progressText) {
+        progressText.textContent = `تحلیل تمام ${completedCount} ستون با موفقیت به پایان رسید.`;
+    }
 }
 
-function renderColumns(columns) {
-    const container = document.getElementById('columnsContainer');
-    container.innerHTML = '';
+function renderSingleColumnCard(col) {
+    const card = document.getElementById(`column-card-${col.id}`);
+    if (!card) return;
 
-    columns.forEach(col => {
-        const analysis = col.analysis;
-        const colDiv = document.createElement('div');
-        colDiv.className = 'col-12 col-lg-6 col-xl-4 column-card-item';
+    const cardBody = card.querySelector('.column-card-body');
+    if (!cardBody) return;
 
-        let bodyContent = '';
-        if (analysis) {
-            let statsRows = '';
-            if (analysis.mean !== null && analysis.mean !== undefined) {
-                statsRows += `<tr><td class="text-muted">میانگین (Mean):</td><td class="fw-semibold text-end text-white">${parseFloat(analysis.mean).toFixed(2)}</td></tr>`;
-            }
-            if (analysis.median !== null && analysis.median !== undefined) {
-                statsRows += `<tr><td class="text-muted">میانه (Median):</td><td class="fw-semibold text-end text-white">${parseFloat(analysis.median).toFixed(2)}</td></tr>`;
-            }
-            if (analysis.mode) {
-                statsRows += `<tr><td class="text-muted">مد (Mode):</td><td class="fw-semibold text-end text-white">${escapeHtml(analysis.mode)}</td></tr>`;
-            }
-            statsRows += `<tr><td class="text-muted">داده‌های یونیک (Unique):</td><td class="fw-semibold text-end text-white">${analysis.value_counts || 0}</td></tr>`;
+    const analysis = col.analysis;
+    if (!analysis) return;
 
-            let imgHtml = analysis.visualization ?
-                `<img src="${analysis.visualization}" alt="${escapeHtml(col.name)}" class="img-fluid rounded border border-secondary border-opacity-25" style="max-height: 220px; object-fit: contain;">` :
-                `<div class="text-muted p-4 border border-secondary border-dashed rounded">نمودار تولید نشده است</div>`;
+    let statsRows = '';
+    if (analysis.mean !== null && analysis.mean !== undefined) {
+        statsRows += `<tr><td class="text-muted">میانگین (Mean):</td><td class="fw-semibold text-end text-white">${parseFloat(analysis.mean).toFixed(2)}</td></tr>`;
+    }
+    if (analysis.median !== null && analysis.median !== undefined) {
+        statsRows += `<tr><td class="text-muted">میانه (Median):</td><td class="fw-semibold text-end text-white">${parseFloat(analysis.median).toFixed(2)}</td></tr>`;
+    }
+    if (analysis.mode) {
+        statsRows += `<tr><td class="text-muted">مد (Mode):</td><td class="fw-semibold text-end text-white">${escapeHtml(analysis.mode)}</td></tr>`;
+    }
+    statsRows += `<tr><td class="text-muted">داده‌های یونیک (Unique):</td><td class="fw-semibold text-end text-white">${analysis.value_counts || 0}</td></tr>`;
 
-            bodyContent = `
-                <div class="table-responsive mb-3">
-                    <table class="table table-sm table-dark-custom mb-0 small">
-                        <tbody>${statsRows}</tbody>
-                    </table>
-                </div>
-                <div class="text-muted small mb-2"><i class="bi bi-bar-chart-fill me-1"></i>نمودار توزیع فراوانی (Seaborn)</div>
-                <div class="text-center">${imgHtml}</div>
-            `;
-        } else {
-            bodyContent = `
-                <div class="text-center p-4">
-                    <i class="bi bi-bar-chart fs-1 text-muted d-block mb-2"></i>
-                    <p class="text-muted small mb-0">هنوز تحلیلی برای این ستون ثبت نشده است.</p>
-                </div>
-            `;
-        }
+    let imgHtml = analysis.visualization ?
+        `<img src="${analysis.visualization}" alt="${escapeHtml(col.name)}" class="img-fluid rounded border border-secondary border-opacity-25" style="max-height: 220px; object-fit: contain;">` :
+        `<div class="text-muted p-4 border border-secondary border-dashed rounded">نمودار تولید نشده است</div>`;
 
-        colDiv.innerHTML = `
-            <div class="card card-dark h-100">
-                <div class="card-header-dark d-flex align-items-center justify-content-between">
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="bi bi-hash text-indigo fs-5" style="color: var(--primary-accent);"></i>
-                        <span class="fw-bold text-white">${escapeHtml(col.name)}</span>
-                    </div>
-                    <span class="badge badge-type badge-int">${escapeHtml(col.data_type)}</span>
-                </div>
-                <div class="card-body p-3 d-flex flex-column justify-content-between">
-                    ${bodyContent}
-                </div>
+    cardBody.innerHTML = `
+        <div class="table-responsive mb-3">
+            <table class="table table-sm table-dark-custom mb-0 small">
+                <tbody>${statsRows}</tbody>
+            </table>
+        </div>
+        <div class="text-muted small mb-2"><i class="bi bi-bar-chart-fill me-1"></i>نمودار توزیع فراوانی (Seaborn)</div>
+        <div class="text-center">${imgHtml}</div>
+    `;
+}
+
+function renderErrorColumnCard(colId, errorMsg) {
+    const card = document.getElementById(`column-card-${colId}`);
+    if (!card) return;
+    const cardBody = card.querySelector('.column-card-body');
+    if (cardBody) {
+        cardBody.innerHTML = `
+            <div class="text-center p-3 text-danger small">
+                <i class="bi bi-exclamation-triangle fs-4 d-block mb-1"></i>
+                <span>${escapeHtml(errorMsg)}</span>
             </div>
         `;
-        container.appendChild(colDiv);
-    });
+    }
 }
 
 function escapeHtml(str) {
