@@ -6,7 +6,7 @@ class Project(models.Model):
     name = models.CharField(verbose_name='نام پروژه', max_length=255, blank=True, null=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='کاربر', related_name='projects')
     created_date = models.DateTimeField('تاریخ ساخت', auto_now_add=True)
-
+    description = models.TextField('توضیحات', blank=True, null=True)
     class Meta:
         db_table = 'project_table'
         verbose_name = 'پروژه'
@@ -17,8 +17,9 @@ class Project(models.Model):
 
 
 class DataSet(models.Model):
-    project = models.ForeignKey(Project, on_delete=models.CASCADE, verbose_name='پروژه', related_name='datasets', null=True, blank=True)
+    project = models.OneToOneField(Project, on_delete=models.CASCADE, verbose_name='پروژه', related_name='dataset', null=True, blank=True)
     file = models.FileField('فایل دیتاست', upload_to='datasets/')
+    file_size = models.PositiveIntegerField(null=True, blank=True, help_text="حجم به بایت")
     record_count = models.PositiveIntegerField('تعداد رکوردها', default=0)
     uploaded_at = models.DateTimeField('تاریخ آپلود', auto_now_add=True)
 

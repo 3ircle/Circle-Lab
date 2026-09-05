@@ -107,13 +107,31 @@ body {
   transform: scale(1.1);
 }
 
-/* Card Styling */
+/* Card & Dropdown Styling */
 .card-dark {
   background-color: var(--bg-surface);
   border: 1px solid var(--border-color);
   border-radius: 1rem;
   transition: all 0.25s ease-in-out;
+  position: relative;
 }
+
+.card-dark:hover {
+  z-index: 5;
+}
+
+.card-dark:has(.dropdown-menu.show) {
+  z-index: 20 !important;
+}
+
+.dropdown-menu-dark {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  z-index: 1050 !important;
+}
+
+
 
 .card-dark:hover {
   border-color: var(--border-hover);

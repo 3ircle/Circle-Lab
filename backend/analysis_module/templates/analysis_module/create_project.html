@@ -1,0 +1,109 @@
+{% extends 'shared/base.html' %}
+{% load static %}
+
+{% block title %}سامانه تحلیل داده | ساخت پروژه جدید{% endblock %}
+
+{% block content %}
+<main class="container py-5 flex-grow-1" style="max-width: 850px;">
+
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h3 class="fw-bold text-white mb-1">ایجاد پروژه و بارگذاری دیتاست</h3>
+            <p class="text-muted mb-0">اطلاعات پروژه را وارد کرده و فایل داده (CSV / Excel) خود را آپلود نمایید.</p>
+        </div>
+        <a href="{% url 'index-page' %}" class="btn btn-outline-dark-custom btn-sm">
+            <i class="bi bi-arrow-right me-1"></i> بازگشت
+        </a>
+    </div>
+
+    <div class="card card-dark">
+        <div class="card-body p-4 p-md-5">
+            <form action="{% url 'create-project-page' %}" method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                {% if form.errors %}
+                <div class="alert alert-danger mb-4">
+                    لطفاً خطاهای زیر را برطرف کنید:
+                    {{ form.errors }}
+                </div>
+                {% endif %}
+
+                <!-- Project Name -->
+                <div class="mb-4">
+                    <label for="projectName" class="form-label text-white fw-semibold">نام پروژه <span class="text-danger">*</span></label>
+                    {{ form.name }}
+                </div>
+
+                <!-- Description -->
+                <div class="mb-4">
+                    <label for="projectDesc" class="form-label text-white fw-semibold">توضیحات (اختیاری)</label>
+                    {{ form.description }}
+                </div>
+
+                <!-- Drag and Drop Upload Area -->
+                <div class="mb-4">
+                    <label class="form-label text-white fw-semibold">آپلود فایل دیتاست</label>
+                    <div class="dropzone position-relative text-center p-4 rounded-3 border border-secondary border-dashed" id="uploadDropzone" style="background: rgba(255, 255, 255, 0.02); cursor: pointer;">
+                        <i class="bi bi-cloud-arrow-up-fill fs-1 mb-2 d-block" style="color: var(--primary-accent);"></i>
+                        <h6 class="text-white fw-bold mb-1">فایل خود را به اینجا بکشید و رها کنید</h6>
+                        <p class="text-muted small mb-3">پشتیبانی از فرمت‌های CSV، XLSX، XLS و Parquet (حداکثر حجم ۱۰۰ مگابایت)</p>
+                        <button type="button" class="btn btn-outline-dark-custom btn-sm" onclick="document.getElementById('datasetFileInput').click()">انتخاب فایل از سیستم</button>
+                        {{ form.file }}
+                    </div>
+                    <div id="selectedFileInfo" class="mt-2 text-info small fw-semibold"></div>
+                </div>
+
+                <!-- Actions -->
+                <div class="d-flex justify-content-end gap-3 pt-2">
+                    <a href="{% url 'index-page' %}" class="btn btn-outline-dark-custom">انصراف</a>
+                    <button type="submit" class="btn btn-indigo d-flex align-items-center gap-2">
+                        <i class="bi bi-cpu-fill"></i>
+                        <span>ایجاد پروژه</span>
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const fileInput = document.getElementById('datasetFileInput');
+    const dropzone = document.getElementById('uploadDropzone');
+    const fileInfo = document.getElementById('selectedFileInfo');
+
+    if (fileInput && dropzone && fileInfo) {
+        fileInput.addEventListener('change', function () {
+            if (fileInput.files.length > 0) {
+                fileInfo.textContent = 'فایل انتخاب شده: ' + fileInput.files[0].name;
+            } else {
+                fileInfo.textContent = '';
+            }
+        });
+
+        dropzone.addEventListener('dragover', function (e) {
+            e.preventDefault();
+            dropzone.style.borderColor = 'var(--primary-accent)';
+        });
+
+        dropzone.addEventListener('dragleave', function (e) {
+            e.preventDefault();
+            dropzone.style.borderColor = '';
+        });
+
+        dropzone.addEventListener('drop', function (e) {
+            e.preventDefault();
+            dropzone.style.borderColor = '';
+            if (e.dataTransfer.files.length > 0) {
+                fileInput.files = e.dataTransfer.files;
+                fileInfo.textContent = 'فایل انتخاب شده: ' + fileInput.files[0].name;
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

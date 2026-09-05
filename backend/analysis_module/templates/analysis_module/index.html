@@ -1,0 +1,290 @@
+{% extends 'shared/base.html' %}
+{% load static %}
+
+{% block title %}سامانه تحلیل داده و هوش مصنوعی | پروژه‌ها{% endblock %}
+{% block nav_projects %}active{% endblock %}
+
+{% block content %}
+<main class="container-fluid px-4 py-4 flex-grow-1">
+
+    <!-- Header & Quick Stats -->
+    <div class="row align-items-center mb-4">
+        <div class="col-md-6 mb-3 mb-md-0">
+            <h3 class="fw-bold text-white mb-1">داشبورد مدیریت پروژه‌ها</h3>
+            <p class="text-muted mb-0">دیتاست‌های خود را مدیریت کرده و تحلیل‌های هوشمند دریافت کنید.</p>
+        </div>
+        <div class="col-md-6">
+            <div class="d-flex justify-content-md-end gap-3">
+                <div class="position-relative flex-grow-1 flex-md-grow-0" style="min-width: 250px;">
+                    <input type="text" id="projectSearchInput" class="form-control form-control-dark ps-5" placeholder="جستجو در پروژه‌ها...">
+                    <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Summary Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="stat-tile">
+                <div class="stat-icon" style="background: rgba(99, 102, 241, 0.15); color: var(--primary-accent);">
+                    <i class="bi bi-folder-fill"></i>
+                </div>
+                <div>
+                    <div class="text-muted small">کل پروژه‌ها</div>
+                    <div class="fs-4 fw-bold text-white">{{projects_count}}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="stat-tile">
+                <div class="stat-icon" style="background: rgba(34, 211, 238, 0.15); color: var(--secondary-accent);">
+                    <i class="bi bi-table"></i>
+                </div>
+                <div>
+                    <div class="text-muted small">مجموع سطرهای پردازش‌شده</div>
+                    <div class="fs-4 fw-bold text-white">{{rows_count}}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="stat-tile">
+                <div class="stat-icon" style="background: rgba(52, 211, 153, 0.15); color: var(--success-color);">
+                    <i class="bi bi-hdd-network-fill"></i>
+                </div>
+                <div>
+                    <div class="text-muted small">حجم داده‌ها</div>
+                    <div class="fs-4 fw-bold text-white">{{file_size}}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="stat-tile">
+                <div class="stat-icon" style="background: rgba(168, 85, 247, 0.15); color: var(--purple-accent);">
+                    <i class="bi bi-chat-quote-fill"></i>
+                </div>
+                <div>
+                    <div class="text-muted small">پرس‌وجوهای AI</div>
+                    <div class="fs-4 fw-bold text-white">۸۴ تحلیل</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Projects Grid -->
+    <h5 class="fw-bold text-white mb-3 d-flex align-items-center gap-2">
+        <i class="bi bi-grid-fill style-icon text-indigo" style="color: var(--primary-accent);"></i>
+        <span>پروژه‌های اخیر</span>
+    </h5>
+
+    <div class="row g-4" id="projectsContainer">
+
+        <!-- Project Cards -->
+        {% for project in projects %}
+        <div class="col-12 col-md-6 col-xl-4 project-card-item" id="project-card-{{ project.id }}">
+            <div class="card card-dark h-100">
+                <div class="card-body p-4 d-flex flex-column">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <span class="badge bg-opacity-10 text-cyan bg-info border border-info border-opacity-25 px-2 py-1 rounded-2">CSV Dataset</span>
+                        <div class="dropdown">
+                            <button class="btn btn-link text-muted p-0 border-0" type="button" data-bs-toggle="dropdown" data-bs-boundary="viewport">
+                                <i class="bi bi-three-dots-vertical"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-start">
+                                <li><a class="dropdown-item" href="#"><i class="bi bi-pencil me-2"></i>ویرایش نام</a></li>
+                                <li><a class="dropdown-item text-danger" href="javascript:void(0)" onclick="deleteProject({{ project.id }})"><i class="bi bi-trash me-2"></i>حذف پروژه</a></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <h5 class="fw-bold text-white mb-2 project-name">{{project.name}}</h5>
+                    <p class="text-muted small mb-4 flex-grow-1 project-desc">{{project.description|default:""}}</p>
+
+                    <div class="border-top border-secondary border-opacity-25 pt-3 mt-auto">
+                        <div class="row text-center mb-3">
+                            <div class="col-6 border-start border-secondary border-opacity-25">
+                                <span class="text-muted d-block small">تعداد سطرها</span>
+                                <span class="fw-semibold text-white">{{project.dataset.record_count|default:0}}</span>
+                            </div>
+                            <div class="col-6">
+                                <span class="text-muted d-block small">ستون‌ها</span>
+                                <span class="fw-semibold text-white">{{project.dataset.columns.count|default:0}} ستون</span>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <a href="" class="btn btn-indigo flex-grow-1 btn-sm d-flex align-items-center justify-content-center gap-1">
+                                <i class="bi bi-bar-chart-line-fill"></i>
+                                <span>مشاهده تحلیل</span>
+                            </a>
+                            <a href="" class="btn btn-outline-dark-custom btn-sm px-3" data-bs-toggle="tooltip" title="گفتگو با هوش مصنوعی">
+                                <i class="bi bi-robot text-cyan" style="color: var(--secondary-accent);"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {%endfor%}
+
+        <!-- Project Card (Create New Placeholder) -->
+        <div class="col-12 col-md-6 col-xl-4" id="createProjectCard">
+            <a href="{% url 'create-project-page' %}" class="card card-dark h-100 text-decoration-none d-flex flex-column align-items-center justify-content-center p-4 text-center" style="border-style: dashed !important; border-width: 2px;">
+                <div class="d-flex flex-column align-items-center justify-content-center py-4">
+                    <div class="add-icon-circle mb-3">
+                        <i class="bi bi-plus-lg fs-3"></i>
+                    </div>
+                    <h6 class="fw-bold text-white mb-1">ایجاد پروژه جدید</h6>
+                    <p class="text-muted small mb-0">دیتاست جدید بارگذاری کنید و تحلیل را شروع کنید</p>
+                </div>
+            </a>
+        </div>
+
+    </div>
+
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const searchInput = document.getElementById('projectSearchInput');
+    const projectsContainer = document.getElementById('projectsContainer');
+    const createProjectCard = document.getElementById('createProjectCard');
+    const searchApiUrl = "{% url 'search-projects-api' %}";
+
+    let debounceTimer;
+
+    if (searchInput) {
+        searchInput.addEventListener('input', function () {
+            clearTimeout(debounceTimer);
+            const query = searchInput.value.trim();
+
+            debounceTimer = setTimeout(() => {
+                fetch(`${searchApiUrl}?q=${encodeURIComponent(query)}`, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    renderProjects(data);
+                })
+                .catch(err => console.error('Search error:', err));
+            }, 300);
+        });
+    }
+
+    function renderProjects(projects) {
+        // Clear existing project cards (except create card)
+        const existingCards = projectsContainer.querySelectorAll('.project-card-item');
+        existingCards.forEach(card => card.remove());
+
+        projects.forEach(project => {
+            const recordCount = project.dataset ? (project.dataset.record_count || 0) : 0;
+            const columnCount = project.dataset ? (project.dataset.column_count || 0) : 0;
+            const description = project.description || '';
+
+            const col = document.createElement('div');
+            col.className = 'col-12 col-md-6 col-xl-4 project-card-item';
+            col.id = `project-card-${project.id}`;
+            col.innerHTML = `
+                <div class="card card-dark h-100">
+                    <div class="card-body p-4 d-flex flex-column">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <span class="badge bg-opacity-10 text-cyan bg-info border border-info border-opacity-25 px-2 py-1 rounded-2">CSV Dataset</span>
+                            <div class="dropdown">
+                                <button class="btn btn-link text-muted p-0 border-0" type="button" data-bs-toggle="dropdown" data-bs-boundary="viewport">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-start">
+                                    <li><a class="dropdown-item" href="#"><i class="bi bi-pencil me-2"></i>ویرایش نام</a></li>
+                                    <li><a class="dropdown-item text-danger" href="javascript:void(0)" onclick="deleteProject(${project.id})"><i class="bi bi-trash me-2"></i>حذف پروژه</a></li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <h5 class="fw-bold text-white mb-2 project-name">${escapeHtml(project.name)}</h5>
+                        <p class="text-muted small mb-4 flex-grow-1 project-desc">${escapeHtml(description)}</p>
+
+                        <div class="border-top border-secondary border-opacity-25 pt-3 mt-auto">
+                            <div class="row text-center mb-3">
+                                <div class="col-6 border-start border-secondary border-opacity-25">
+                                    <span class="text-muted d-block small">تعداد سطرها</span>
+                                    <span class="fw-semibold text-white">${recordCount}</span>
+                                </div>
+                                <div class="col-6">
+                                    <span class="text-muted d-block small">ستون‌ها</span>
+                                    <span class="fw-semibold text-white">${columnCount} ستون</span>
+                                </div>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <a href="" class="btn btn-indigo flex-grow-1 btn-sm d-flex align-items-center justify-content-center gap-1">
+                                    <i class="bi bi-bar-chart-line-fill"></i>
+                                    <span>مشاهده تحلیل</span>
+                                </a>
+                                <a href="" class="btn btn-outline-dark-custom btn-sm px-3" data-bs-toggle="tooltip" title="گفتگو با هوش مصنوعی">
+                                    <i class="bi bi-robot text-cyan" style="color: var(--secondary-accent);"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            projectsContainer.insertBefore(col, createProjectCard);
+        });
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+});
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function deleteProject(projectId) {
+    if (!confirm('آیا از حذف این پروژه اطمینان دارید؟ این عملیات قابل بازگشت نیست.')) {
+        return;
+    }
+
+    const csrftoken = getCookie('csrftoken');
+    fetch(`/api/projects/delete/${projectId}/`, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRFToken': csrftoken,
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            const card = document.getElementById(`project-card-${projectId}`);
+            if (card) {
+                card.remove();
+            }
+        } else {
+            alert('خطایی در حذف پروژه رخ داد.');
+        }
+    })
+    .catch(err => {
+        console.error('Delete error:', err);
+        alert('خطایی در حذف پروژه رخ داد.');
+    });
+}
+</script>
+{% endblock %}
+
