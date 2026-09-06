@@ -10,4 +10,5 @@ urlpatterns = [
     path('api/projects/<int:pk>/clear-analyses/', views.ClearProjectAnalysesAPIView.as_view(), name='clear-project-analyses-api'),
     path('api/columns/<int:pk>/analyze-single/', views.AnalyzeSingleColumnAPIView.as_view(), name='analyze-single-column-api'),
     path('api/columns/<int:pk>/analysis/', views.ColumnAnalysisAPIView.as_view(), name='column-analysis-api'),
+    path('api/datasets/<int:pk>/status/', views.DataSetStatusAPIView.as_view(), name='dataset-status-api'),
 ]

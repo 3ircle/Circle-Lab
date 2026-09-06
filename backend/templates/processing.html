@@ -39,6 +39,18 @@
         </div>
     </div>
 
+    <!-- Processing Status Banner (for async Celery task processing) -->
+    <div id="processingStatusBanner" class="alert alert-dark border border-cyan border-opacity-25 d-flex align-items-center justify-content-between p-3 mb-4 {% if dataset.status == 'completed' %}d-none{% endif %}" style="background-color: #1E293B;">
+        <div class="d-flex align-items-center gap-3">
+            <div id="statusSpinner" class="spinner-border text-cyan style-spinner" role="status" style="width: 1.8rem; height: 1.8rem; color: var(--secondary-accent);"></div>
+            <div>
+                <h6 class="fw-bold text-white mb-0" id="statusTitle">در حال استخراج ستون‌ها و پردازش پس‌زمینه دیتاست...</h6>
+                <small class="text-muted" id="statusSubtitle">توسط Celery در حال آنالیز داده‌ها می‌باشد. لطفاً شکیبا باشید.</small>
+            </div>
+        </div>
+        <span id="statusBadge" class="badge bg-info bg-opacity-10 text-cyan border border-info border-opacity-25 px-3 py-2 rounded-2">{{ dataset.get_status_display }}</span>
+    </div>
+
     <!-- Dataset Summary Cards Bar -->
     <div class="row g-3 mb-4">
         <div class="col-6 col-md-4 col-xl-3">
@@ -196,7 +208,47 @@ document.addEventListener('DOMContentLoaded', function () {
             badge.textContent = slider.value + '٪';
         });
     }
+
+    // Polling وضعیت پردازش پس‌زمینه Celery
+    const datasetId = "{{ dataset.id }}";
+    const initialStatus = "{{ dataset.status }}";
+    if (datasetId && initialStatus !== 'completed' && initialStatus !== 'failed') {
+        pollDatasetStatus(datasetId);
+    }
 });
+
+function pollDatasetStatus(datasetId) {
+    const interval = setInterval(async () => {
+        try {
+            const res = await fetch(`/api/datasets/${datasetId}/status/`);
+            if (res.ok) {
+                const data = await res.json();
+                const banner = document.getElementById('processingStatusBanner');
+                const badge = document.getElementById('statusBadge');
+                const title = document.getElementById('statusTitle');
+
+                if (badge) badge.textContent = data.status_display;
+
+                if (data.status === 'completed') {
+                    clearInterval(interval);
+                    if (banner) banner.classList.add('d-none');
+                    window.location.reload();
+                } else if (data.status === 'failed') {
+                    clearInterval(interval);
+                    const spinner = document.getElementById('statusSpinner');
+                    if (spinner) spinner.classList.add('d-none');
+                    if (title) title.textContent = 'خطا در پردازش پس‌زمینه دیتاست';
+                    if (banner) {
+                        banner.classList.remove('border-cyan');
+                        banner.classList.add('border-danger', 'text-danger');
+                    }
+                }
+            }
+        } catch (err) {
+            console.error('Error polling dataset status:', err);
+        }
+    }, 2500);
+}
 
 function getCookie(name) {
     let cookieValue = null;
