@@ -39,8 +39,10 @@ class DataSet(models.Model):
         if self.file and self.file.name:
             ext = os.path.splitext(self.file.name)[1].lstrip('.').upper()
             if ext:
+                if ext in ['XLSX', 'XLS']:
+                    return "EXCEL Dataset"
                 return f"{ext} Dataset"
-        return "CSV Dataset"
+        return "DATASET"
 
     class Meta:
         db_table = 'dataset_table'
