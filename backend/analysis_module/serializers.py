@@ -25,10 +25,11 @@ class ColumnSerializer(serializers.ModelSerializer):
 class DataSetSerializer(serializers.ModelSerializer):
     columns = ColumnSerializer(many=True, read_only=True)
     column_count = serializers.IntegerField(source='columns.count', read_only=True)
+    file_extension = serializers.ReadOnlyField()
 
     class Meta:
         model = DataSet
-        fields = ['id', 'file', 'file_size', 'record_count', 'uploaded_at', 'columns', 'column_count']
+        fields = ['id', 'file', 'file_extension', 'file_size', 'record_count', 'missing_values_chart', 'uploaded_at', 'columns', 'column_count']
 
 
 class ProjectSerializer(serializers.ModelSerializer):

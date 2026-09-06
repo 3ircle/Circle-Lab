@@ -4,6 +4,7 @@ import os
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 import seaborn as sns
 import pandas as pd
 from django.core.files.base import ContentFile
@@ -117,6 +118,16 @@ def process_dataset_file(dataset):
                         data_type=final_type
                     )
 
+            # تولید و ذخیره نمودار ماتریس داده‌های مفقود در دیتابیس
+            try:
+                df = pd.read_csv(file_path, encoding=encoding, errors="replace", delimiter=delimiter)
+                missing_chart_buf = generate_missing_values_chart(df)
+                if missing_chart_buf:
+                    chart_filename = f"missing_matrix_{dataset.id}.png"
+                    dataset.missing_values_chart.save(chart_filename, ContentFile(missing_chart_buf.getvalue()), save=True)
+            except Exception as chart_err:
+                print(f"Error generating missing values chart: {chart_err}")
+
         except Exception as e:
             print(f"Error processing CSV dataset: {e}")
 
@@ -162,3 +173,65 @@ def generate_seaborn_chart(df, col_name, data_type):
     plt.close(fig)
     buf.seek(0)
     return buf
+
+
+def generate_missing_values_chart(df):
+    """
+    تولید نمودار ماتریس مقادیر مفقوده (MSNO Matrix / Missing Values Matrix)
+    با پشتیبانی از تعداد بالای ستون‌ها و استایل Dark Mode کاستوم CircleLab
+    """
+    num_cols = len(df.columns)
+    if num_cols == 0:
+        return None
+
+    # محاسبه عرض پویا بر اساس تعداد ستون‌ها تا اسکوئیش و ناخوانا نشوند
+    fig_width = max(10.0, num_cols * 0.38)
+    fig, ax = plt.subplots(figsize=(fig_width, 4.2), dpi=100)
+
+    # Dark Theme Colors
+    fig.patch.set_facecolor('#1E293B')
+    ax.set_facecolor('#1E293B')
+
+    try:
+        import missingno as msno
+        # اگر پکیج missingno موجود باشد
+        msno.matrix(
+            df,
+            sparkline=False,
+            color=(0.133, 0.827, 0.933), # Cyan #22D3EE
+            fontsize=9,
+            labels=True,
+            ax=ax
+        )
+        ax.set_facecolor('#1E293B')
+        ax.tick_params(colors='#CBD5E1', labelsize=8)
+    except Exception:
+        # Fallback به Matplotlib / Seaborn در صورت عدم حضور یا خطای missingno
+        # نمونه‌برداری یکنواخت تا ۳۰۰ سطر برای سرعت و وضوح ماتریس
+        if len(df) > 300:
+            df_sampled = df.iloc[::len(df)//300]
+        else:
+            df_sampled = df
+
+        not_null_matrix = df_sampled.notnull().values
+        cmap = mcolors.ListedColormap(['#334155', '#22D3EE']) # Grey for missing, Cyan for present
+
+        ax.imshow(not_null_matrix, aspect='auto', cmap=cmap, interpolation='none')
+
+        ax.set_xticks(range(num_cols))
+        ax.set_xticklabels(df.columns, rotation=45, ha='right', colors='#CBD5E1', fontsize=8)
+        ax.set_yticks([])
+        ax.tick_params(colors='#CBD5E1')
+
+        for spine in ax.spines.values():
+            spine.set_color('#334155')
+
+    ax.set_title('ماتریس مقادیر مفقوده (Missing Values Matrix)', color='#FFFFFF', fontsize=11, pad=12)
+    plt.tight_layout()
+
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png', facecolor=fig.get_facecolor(), edgecolor='none')
+    plt.close(fig)
+    buf.seek(0)
+    return buf
+

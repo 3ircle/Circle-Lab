@@ -85,7 +85,7 @@
             <div class="card card-dark h-100">
                 <div class="card-body p-4 d-flex flex-column">
                     <div class="d-flex align-items-center justify-content-between mb-3">
-                        <span class="badge bg-opacity-10 text-cyan bg-info border border-info border-opacity-25 px-2 py-1 rounded-2">CSV Dataset</span>
+                        <span class="badge bg-opacity-10 text-cyan bg-info border border-info border-opacity-25 px-2 py-1 rounded-2">{{ project.dataset.file_extension|default:"CSV Dataset" }}</span>
                         <div class="dropdown">
                             <button class="btn btn-link text-muted p-0 border-0" type="button" data-bs-toggle="dropdown" data-bs-boundary="viewport">
                                 <i class="bi bi-three-dots-vertical"></i>
@@ -184,6 +184,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const recordCount = project.dataset ? (project.dataset.record_count || 0) : 0;
             const columnCount = project.dataset ? (project.dataset.column_count || 0) : 0;
             const description = project.description || '';
+            const datasetBadge = (project.dataset && project.dataset.file_extension) ? project.dataset.file_extension : 'CSV Dataset';
 
             const col = document.createElement('div');
             col.className = 'col-12 col-md-6 col-xl-4 project-card-item';
@@ -192,7 +193,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <div class="card card-dark h-100">
                     <div class="card-body p-4 d-flex flex-column">
                         <div class="d-flex align-items-center justify-content-between mb-3">
-                            <span class="badge bg-opacity-10 text-cyan bg-info border border-info border-opacity-25 px-2 py-1 rounded-2">CSV Dataset</span>
+                            <span class="badge bg-opacity-10 text-cyan bg-info border border-info border-opacity-25 px-2 py-1 rounded-2">${escapeHtml(datasetBadge)}</span>
                             <div class="dropdown">
                                 <button class="btn btn-link text-muted p-0 border-0" type="button" data-bs-toggle="dropdown" data-bs-boundary="viewport">
                                     <i class="bi bi-three-dots-vertical"></i>

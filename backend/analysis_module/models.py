@@ -1,3 +1,4 @@
+import os
 from django.db import models
 from user_module.models import User
 
@@ -21,7 +22,16 @@ class DataSet(models.Model):
     file = models.FileField('فایل دیتاست', upload_to='datasets/')
     file_size = models.PositiveIntegerField(null=True, blank=True, help_text="حجم به بایت")
     record_count = models.PositiveIntegerField('تعداد رکوردها', default=0)
+    missing_values_chart = models.ImageField('نمودار داده‌های مفقود', upload_to='visualizations/missing/', blank=True, null=True)
     uploaded_at = models.DateTimeField('تاریخ آپلود', auto_now_add=True)
+
+    @property
+    def file_extension(self):
+        if self.file and self.file.name:
+            ext = os.path.splitext(self.file.name)[1].lstrip('.').upper()
+            if ext:
+                return f"{ext} Dataset"
+        return "CSV Dataset"
 
     class Meta:
         db_table = 'dataset_table'
