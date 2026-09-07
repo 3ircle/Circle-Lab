@@ -94,18 +94,27 @@
                 <i class="bi bi-grid-3x3-gap-fill text-cyan fs-5" style="color: var(--secondary-accent);"></i>
                 <h5 class="fw-bold text-white mb-0">ماتریس مقادیر مفقوده (Missing Values Matrix)</h5>
             </div>
-            <span class="badge bg-opacity-10 text-cyan bg-info border border-info border-opacity-25 px-2 py-1 rounded-2">ارزیابی کامل دیتاست</span>
+            <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-sm btn-outline-cyan d-flex align-items-center gap-1" id="refreshMissingChartBtn" onclick="regenerateMissingChart()">
+                    <i class="bi bi-arrow-clockwise"></i>
+                    <span>تولید مجدد ماتریس</span>
+                </button>
+                <span class="badge bg-opacity-10 text-cyan bg-info border border-info border-opacity-25 px-2 py-1 rounded-2">ارزیابی کامل دیتاست</span>
+            </div>
         </div>
-        <div class="card-body p-3">
+        <div class="card-body p-3" id="missingValuesChartContainer">
             {% if dataset and dataset.missing_values_chart %}
             <div style="overflow-x: auto; overflow-y: hidden; white-space: nowrap; -webkit-overflow-scrolling: touch;" class="custom-scrollbar pb-2">
                 <img src="{{ dataset.missing_values_chart.url }}" id="missingValuesChartImg" alt="ماتریس مقادیر مفقوده" class="rounded border border-secondary border-opacity-25" style="min-width: 100%; height: auto; max-height: 320px; object-fit: contain;">
             </div>
             {% else %}
-            <div class="text-center py-4">
+            <div class="text-center py-4" id="missingChartPlaceholder">
                 <i class="bi bi-diagram-3 fs-1 text-muted d-block mb-2"></i>
                 <p class="text-muted small mb-0">نمودار مقادیر مفقوده هنوز تولید نشده است.</p>
-                <p class="text-muted extra-small">پس از آپلود یا بازپردازش، نمای کلی داده‌های مفقوده در اینجا نمایش داده می‌شود.</p>
+                <button class="btn btn-indigo btn-sm mt-2" onclick="regenerateMissingChart()">
+                    <i class="bi bi-magic me-1"></i>
+                    تولید ماتریس مقادیر مفقوده
+                </button>
             </div>
             {% endif %}
         </div>
@@ -173,12 +182,22 @@
                         <div class="text-muted p-4 border border-secondary border-dashed rounded">نمودار تولید نشده است</div>
                         {% endif %}
                     </div>
+                    <!-- Action Button: More Analysis & AI Chat -->
+                    <button class="btn btn-outline-cyan btn-sm w-100 mt-3 d-flex align-items-center justify-content-center gap-2" onclick="openColumnDetailDrawer({{ col.id }})">
+                        <i class="bi bi-layout-sidebar-reverse"></i>
+                        <span>تحلیل بیشتر & چت AI</span>
+                    </button>
                     {% else %}
                     <div class="text-center p-4">
                         <i class="bi bi-bar-chart fs-1 text-muted d-block mb-2"></i>
                         <p class="text-muted small mb-0">هنوز تحلیلی برای این ستون ثبت نشده است.</p>
                         <p class="text-muted extra-small">جهت تولید آمار و نمودار روی «شروع / بازپردازش تحلیل» کلیک کنید.</p>
                     </div>
+                    <!-- Action Button: More Analysis & AI Chat even if not pre-analyzed -->
+                    <button class="btn btn-outline-cyan btn-sm w-100 mt-3 d-flex align-items-center justify-content-center gap-2" onclick="openColumnDetailDrawer({{ col.id }})">
+                        <i class="bi bi-layout-sidebar-reverse"></i>
+                        <span>تحلیل بیشتر & چت AI</span>
+                    </button>
                     {% endif %}
                     {% endwith %}
                 </div>
@@ -189,6 +208,161 @@
             <p class="text-muted">هیچ ستونی برای این دیتاست یافت نشد.</p>
         </div>
         {% endfor %}
+    </div>
+
+    <!-- Offcanvas Drawer for Detailed Column Analysis & AI Chat -->
+    <div class="offcanvas offcanvas-end offcanvas-column-detail text-white" tabindex="-1" id="columnDetailOffcanvas" aria-labelledby="columnDetailOffcanvasLabel">
+        <div class="offcanvas-header offcanvas-header-dark d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-hash fs-4 text-cyan" style="color: var(--secondary-accent);"></i>
+                <div>
+                    <h5 class="offcanvas-title fw-bold text-white mb-0" id="drawerColumnTitle">نام ستون</h5>
+                    <small class="text-muted" id="drawerColumnSubtitle">دیتاست</small>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span id="drawerDataTypeBadge" class="badge badge-type badge-int">نوع داده</span>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="بستن"></button>
+            </div>
+        </div>
+
+        <!-- Drawer Navigation Tabs -->
+        <ul class="nav nav-tabs nav-tabs-dark px-3 pt-2" id="columnDetailTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active d-flex align-items-center gap-2" id="stats-tab" data-bs-toggle="tab" data-bs-target="#statsTabPane" type="button" role="tab">
+                    <i class="bi bi-bar-chart-steps"></i>
+                    <span>آمار و توزیع مقادیر</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link d-flex align-items-center gap-2" id="chat-tab" data-bs-toggle="tab" data-bs-target="#chatTabPane" type="button" role="tab">
+                    <i class="bi bi-chat-dots-fill"></i>
+                    <span>چت هوشمند با AI</span>
+                </button>
+            </li>
+        </ul>
+
+        <div class="offcanvas-body offcanvas-body-dark tab-content" id="columnDetailTabContent">
+            <!-- Tab 1: Detailed Stats & Value Counts -->
+            <div class="tab-pane fade show active" id="statsTabPane" role="tabpanel">
+                <div id="drawerLoadingState" class="text-center py-5">
+                    <div class="spinner-border text-cyan mb-3" style="width: 2.5rem; height: 2.5rem; color: var(--secondary-accent);" role="status"></div>
+                    <div class="text-muted">در حال استخراج و محاسبه تحلیل‌های پیشرفته و همبستگی‌ها...</div>
+                </div>
+
+                <div id="drawerContentState" class="d-none">
+                    <!-- Overview KPIs -->
+                    <div class="row g-2 mb-3">
+                        <div class="col-4">
+                            <div class="p-2 rounded-3 bg-dark border border-secondary border-opacity-25 text-center">
+                                <small class="text-muted d-block extra-small">داده‌های مفقود</small>
+                                <span class="fw-bold fs-6" id="drawerMissingStats">۰ (۰٪)</span>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-2 rounded-3 bg-dark border border-secondary border-opacity-25 text-center">
+                                <small class="text-muted d-block extra-small">مقادیر یونیک</small>
+                                <span class="fw-bold text-white fs-6" id="drawerUniqueStats">۰</span>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-2 rounded-3 bg-dark border border-secondary border-opacity-25 text-center">
+                                <small class="text-muted d-block extra-small">کل رکوردها</small>
+                                <span class="fw-bold text-white fs-6" id="drawerTotalStats">۰</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Top 5 Correlated Columns Section -->
+                    <div class="card card-dark mb-3">
+                        <div class="card-header-dark p-2 px-3 d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-diagram-3-fill text-cyan" style="color: var(--secondary-accent);"></i>
+                                <span class="fw-bold text-white small">۵ ستون با بیشترین همبستگی (Top 5 Correlations)</span>
+                            </div>
+                            <span class="badge bg-secondary bg-opacity-25 text-muted small">پیرسون</span>
+                        </div>
+                        <div class="card-body p-2" id="drawerCorrelationsContainer">
+                            <!-- Populated via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Value Counts Section -->
+                    <div class="card card-dark mb-3">
+                        <div class="card-header-dark p-2 px-3 d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-list-ol text-cyan" style="color: var(--secondary-accent);"></i>
+                                <span class="fw-bold text-white small">توزیع مقادیر برتر (Pandas value_counts)</span>
+                            </div>
+                            <span class="badge bg-indigo text-white small">۱۰ مقدار پرتکرار</span>
+                        </div>
+                        <div class="card-body p-2" id="drawerValueCountsContainer">
+                            <!-- Populated via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Full Descriptive Stats Table -->
+                    <div class="card card-dark mb-3">
+                        <div class="card-header-dark p-2 px-3 d-flex align-items-center gap-2">
+                            <i class="bi bi-calculator-fill text-cyan" style="color: var(--secondary-accent);"></i>
+                            <span class="fw-bold text-white small">آمار توصیفی کامل</span>
+                        </div>
+                        <div class="card-body p-2">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-dark-custom mb-0 small">
+                                    <tbody id="drawerDescriptiveStatsTbody">
+                                        <!-- Populated via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Distribution Chart Image -->
+                    <div class="card card-dark mb-2" id="drawerChartCard">
+                        <div class="card-header-dark p-2 px-3 d-flex align-items-center gap-2">
+                            <i class="bi bi-bar-chart-fill text-cyan" style="color: var(--secondary-accent);"></i>
+                            <span class="fw-bold text-white small">نمودار توزیع فراوانی (Seaborn)</span>
+                        </div>
+                        <div class="card-body p-2 text-center" id="drawerChartContainer">
+                            <!-- Populated via JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 2: Dedicated AI Column Chat -->
+            <div class="tab-pane fade d-flex flex-column" id="chatTabPane" role="tabpanel" style="min-height: 480px;">
+                <div class="mb-2">
+                    <small class="text-muted d-block mb-1">پیشنهاد سوالات سریع:</small>
+                    <div class="d-flex flex-wrap gap-1" id="quickPromptChips">
+                        <button class="quick-prompt-btn" onclick="sendQuickPrompt('توزیع و الگوهای مهم این ستون را تحلیل کن.')">توزیع و الگوهای ستون</button>
+                        <button class="quick-prompt-btn" onclick="sendQuickPrompt('داده‌های مفقوده یا پرت این ستون چطور مدیریت شوند؟')">مدیریت مفقودی‌ها و پرت</button>
+                        <button class="quick-prompt-btn" onclick="sendQuickPrompt('همبستگی این ستون با سایر ویژگی‌ها چه مفهومی دارد؟')">تفسیر همبستگی‌ها</button>
+                        <button class="quick-prompt-btn" onclick="sendQuickPrompt('کد پایتون برای پیش‌پردازش و ساخت ویژگی جدید از این ستون بنویس.')">کد پایتون پیش‌پردازش</button>
+                    </div>
+                </div>
+
+                <!-- Chat Messages Box -->
+                <div class="flex-grow-1 p-3 rounded-3 bg-dark border border-secondary border-opacity-25 mb-3 overflow-auto custom-scrollbar" id="drawerChatMessages" style="max-height: 380px; min-height: 280px; display: flex; flex-direction: column; gap: 0.85rem;">
+                    <div class="chat-bubble chat-bubble-ai d-flex gap-2">
+                        <div class="ai-avatar flex-shrink-0" style="width: 28px; height: 28px; font-size: 0.75rem;"><i class="bi bi-robot"></i></div>
+                        <div>
+                            <div class="small fw-semibold text-cyan mb-1">دستیار هوشمند CircleLab</div>
+                            <div class="small" id="drawerAiWelcomeText">سلام! من آماده‌ام تا به تمام سوالات شما درباره این ستون، آمار توصیفی، همبستگی‌ها و راهکارهای پیش‌پردازش با پایتون پاسخ دهم. سوال خود را بنویسید.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Input Bar -->
+                <div class="d-flex align-items-center gap-2 mt-auto">
+                    <input type="text" class="form-control form-control-dark" id="drawerChatInput" placeholder="سوال خود را درباره این ستون بنویسید..." onkeydown="if(event.key==='Enter') submitDrawerChat();">
+                    <button class="btn btn-indigo d-flex align-items-center justify-content-center px-3" id="drawerChatSendBtn" onclick="submitDrawerChat()">
+                        <i class="bi bi-send-fill"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
 </main>
@@ -265,6 +439,47 @@ function getCookie(name) {
     return cookieValue;
 }
 
+async function regenerateMissingChart() {
+    const datasetId = "{{ dataset.id }}";
+    if (!datasetId) return;
+
+    const btn = document.getElementById('refreshMissingChartBtn');
+    const container = document.getElementById('missingValuesChartContainer');
+    const csrftoken = getCookie('csrftoken');
+
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> در حال تولید...';
+    }
+
+    try {
+        const res = await fetch(`/api/datasets/${datasetId}/missing-chart/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken,
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        const data = await res.json();
+        if (res.ok && data.chart_url) {
+            container.innerHTML = `
+                <div style="overflow-x: auto; overflow-y: hidden; white-space: nowrap; -webkit-overflow-scrolling: touch;" class="custom-scrollbar pb-2">
+                    <img src="${data.chart_url}?t=${Date.now()}" id="missingValuesChartImg" alt="ماتریس مقادیر مفقوده" class="rounded border border-secondary border-opacity-25" style="min-width: 100%; height: auto; max-height: 320px; object-fit: contain;">
+                </div>
+            `;
+        } else {
+            console.error('Error generating missing chart:', data.error);
+        }
+    } catch (err) {
+        console.error('Error regenerating missing chart:', err);
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> <span>تولید مجدد ماتریس</span>';
+        }
+    }
+}
+
 async function startLiveAnalysis() {
     const slider = document.getElementById('samplePercentSlider');
     const samplePercent = slider ? parseInt(slider.value) : 100;
@@ -275,6 +490,9 @@ async function startLiveAnalysis() {
 
     btn.disabled = true;
     btnText.textContent = 'در حال پردازش...';
+
+    // تولید یا به‌روزرسانی هم‌زمان نمودار مقادیر مفقوده
+    regenerateMissingChart();
 
     // ۱. پاکسازی کارت‌های فرانت و دیتابیس
     try {
@@ -382,6 +600,10 @@ function renderSingleColumnCard(col) {
         </div>
         <div class="text-muted small mb-2"><i class="bi bi-bar-chart-fill me-1"></i>نمودار توزیع فراوانی (Seaborn)</div>
         <div class="text-center">${imgHtml}</div>
+        <button class="btn btn-outline-cyan btn-sm w-100 mt-3 d-flex align-items-center justify-content-center gap-2" onclick="openColumnDetailDrawer(${col.id})">
+            <i class="bi bi-layout-sidebar-reverse"></i>
+            <span>تحلیل بیشتر & چت AI</span>
+        </button>
     `;
 }
 
@@ -395,7 +617,305 @@ function renderErrorColumnCard(colId, errorMsg) {
                 <i class="bi bi-exclamation-triangle fs-4 d-block mb-1"></i>
                 <span>${escapeHtml(errorMsg)}</span>
             </div>
+            <button class="btn btn-outline-cyan btn-sm w-100 mt-2 d-flex align-items-center justify-content-center gap-2" onclick="openColumnDetailDrawer(${colId})">
+                <i class="bi bi-layout-sidebar-reverse"></i>
+                <span>تحلیل بیشتر & چت AI</span>
+            </button>
         `;
+    }
+}
+
+let currentDrawerColumnId = null;
+let currentColumnChatHistory = [];
+let isAiResponding = false;
+
+function openColumnDetailDrawer(columnId) {
+    currentDrawerColumnId = columnId;
+    currentColumnChatHistory = [];
+    isAiResponding = false;
+
+    const offcanvasEl = document.getElementById('columnDetailOffcanvas');
+    if (offcanvasEl && typeof bootstrap !== 'undefined') {
+        const offcanvasInstance = bootstrap.Offcanvas.getOrCreateInstance(offcanvasEl);
+        offcanvasInstance.show();
+    }
+
+    // Show loading state, hide content state
+    const loadingState = document.getElementById('drawerLoadingState');
+    const contentState = document.getElementById('drawerContentState');
+    if (loadingState) loadingState.classList.remove('d-none');
+    if (contentState) contentState.classList.add('d-none');
+
+    // Reset tabs to stats tab
+    const statsTabBtn = document.getElementById('stats-tab');
+    if (statsTabBtn && typeof bootstrap !== 'undefined') {
+        bootstrap.Tab.getOrCreateInstance(statsTabBtn).show();
+    }
+
+    // Reset chat messages
+    const chatContainer = document.getElementById('drawerChatMessages');
+    if (chatContainer) {
+        chatContainer.innerHTML = `
+            <div class="chat-bubble chat-bubble-ai d-flex gap-2">
+                <div class="ai-avatar flex-shrink-0" style="width: 28px; height: 28px; font-size: 0.75rem;"><i class="bi bi-robot"></i></div>
+                <div>
+                    <div class="small fw-semibold text-cyan mb-1">دستیار هوشمند CircleLab</div>
+                    <div class="small">سلام! من آماده‌ام تا به تمام سوالات شما درباره این ستون، آمار توصیفی، همبستگی‌ها و راهکارهای پیش‌پردازش با پایتون پاسخ دهم. سوال خود را بنویسید.</div>
+                </div>
+            </div>
+        `;
+    }
+
+    fetch(`/api/columns/${columnId}/detail/`)
+        .then(res => {
+            if (!res.ok) throw new Error('خطا در دریافت اطلاعات ستون');
+            return res.json();
+        })
+        .then(data => {
+            renderDrawerDetails(data);
+        })
+        .catch(err => {
+            console.error('Drawer fetch error:', err);
+            const loadingState = document.getElementById('drawerLoadingState');
+            if (loadingState) {
+                loadingState.innerHTML = `
+                    <div class="text-danger py-4">
+                        <i class="bi bi-exclamation-triangle fs-3 d-block mb-2"></i>
+                        <span>${escapeHtml(err.message || 'خطا در بارگذاری اطلاعات ستون')}</span>
+                    </div>
+                `;
+            }
+        });
+}
+
+function renderDrawerDetails(data) {
+    const loadingState = document.getElementById('drawerLoadingState');
+    const contentState = document.getElementById('drawerContentState');
+    if (loadingState) loadingState.classList.add('d-none');
+    if (contentState) contentState.classList.remove('d-none');
+
+    const col = data.column || {};
+    const stats = data.stats || {};
+    const valCounts = data.value_counts || [];
+    const correlations = data.top_correlations || [];
+
+    // Header
+    const titleEl = document.getElementById('drawerColumnTitle');
+    const subtitleEl = document.getElementById('drawerColumnSubtitle');
+    const badgeEl = document.getElementById('drawerDataTypeBadge');
+
+    if (titleEl) titleEl.textContent = col.name || 'بدون نام';
+    if (subtitleEl) subtitleEl.textContent = data.project_name ? `پروژه: ${data.project_name}` : 'اطلاعات ستون';
+    if (badgeEl) badgeEl.textContent = col.data_type || 'نامشخص';
+
+    // KPIs
+    const missingStatsEl = document.getElementById('drawerMissingStats');
+    if (missingStatsEl) {
+        missingStatsEl.textContent = `${stats.missing_count || 0} (${stats.missing_percentage || 0}٪)`;
+        if (stats.missing_count > 0) {
+            missingStatsEl.className = 'fw-bold text-danger fs-6';
+        } else {
+            missingStatsEl.className = 'fw-bold text-success fs-6';
+        }
+    }
+    const uniqueEl = document.getElementById('drawerUniqueStats');
+    if (uniqueEl) uniqueEl.textContent = stats.unique_count || 0;
+    const totalEl = document.getElementById('drawerTotalStats');
+    if (totalEl) totalEl.textContent = stats.total_records || 0;
+
+    // Top 5 Correlations
+    const corrContainer = document.getElementById('drawerCorrelationsContainer');
+    if (corrContainer) {
+        if (correlations && correlations.length > 0) {
+            let corrHtml = '<div class="d-flex flex-column gap-2">';
+            correlations.forEach(corr => {
+                const isPos = corr.correlation >= 0;
+                const badgeClass = isPos ? 'bg-info bg-opacity-10 text-cyan border-info' : 'bg-warning bg-opacity-10 text-warning border-warning';
+                const sign = isPos ? '+' : '';
+                corrHtml += `
+                    <div class="d-flex align-items-center justify-content-between p-2 rounded-2 bg-dark border border-secondary border-opacity-25">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-arrow-left-right text-muted small"></i>
+                            <span class="text-white small fw-semibold">${escapeHtml(corr.column_name)}</span>
+                            <span class="badge bg-secondary bg-opacity-25 text-muted extra-small">${escapeHtml(corr.data_type)}</span>
+                        </div>
+                        <span class="badge border border-opacity-25 px-2 py-1 ${badgeClass}" dir="ltr">${sign}${corr.correlation.toFixed(3)}</span>
+                    </div>
+                `;
+            });
+            corrHtml += '</div>';
+            corrContainer.innerHTML = corrHtml;
+        } else {
+            corrContainer.innerHTML = '<div class="text-muted small text-center py-2">همبستگی قابل محاسبه‌ای با سایر ستون‌ها یافت نشد.</div>';
+        }
+    }
+
+    // Value Counts Table & Progress Bars
+    const valCountsContainer = document.getElementById('drawerValueCountsContainer');
+    if (valCountsContainer) {
+        if (valCounts && valCounts.length > 0) {
+            let valHtml = '<div class="table-responsive"><table class="table table-sm table-dark-custom mb-0 small"><tbody>';
+            valCounts.forEach(item => {
+                valHtml += `
+                    <tr>
+                        <td class="text-white fw-semibold" style="width: 38%; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtml(item.value)}">${escapeHtml(item.value)}</td>
+                        <td class="text-end text-muted" style="width: 22%;">${item.count} سطر</td>
+                        <td style="width: 40%;">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="progress progress-dark flex-grow-1" style="height: 6px;">
+                                    <div class="progress-bar progress-bar-indigo" role="progressbar" style="width: ${Math.min(item.percentage, 100)}%;"></div>
+                                </div>
+                                <span class="extra-small text-cyan" style="min-width: 38px;">${item.percentage}٪</span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            valHtml += '</tbody></table></div>';
+            valCountsContainer.innerHTML = valHtml;
+        } else {
+            valCountsContainer.innerHTML = '<div class="text-muted small text-center py-2">اطلاعات فراوانی مقادیر ثبت نشده است.</div>';
+        }
+    }
+
+    // Full Descriptive Stats Table
+    const statsTbody = document.getElementById('drawerDescriptiveStatsTbody');
+    if (statsTbody) {
+        let statRows = '';
+        if (stats.mean !== null && stats.mean !== undefined) {
+            statRows += `<tr><td class="text-muted">میانگین (Mean):</td><td class="fw-semibold text-end text-white">${stats.mean}</td></tr>`;
+        }
+        if (stats.median !== null && stats.median !== undefined) {
+            statRows += `<tr><td class="text-muted">میانه (Median):</td><td class="fw-semibold text-end text-white">${stats.median}</td></tr>`;
+        }
+        if (stats.mode) {
+            statRows += `<tr><td class="text-muted">مد (Mode):</td><td class="fw-semibold text-end text-white">${escapeHtml(stats.mode)}</td></tr>`;
+        }
+        if (stats.std !== null && stats.std !== undefined) {
+            statRows += `<tr><td class="text-muted">انحراف معیار (Std Dev):</td><td class="fw-semibold text-end text-white">${stats.std}</td></tr>`;
+        }
+        if (stats.min !== null && stats.min !== undefined && stats.max !== null && stats.max !== undefined) {
+            statRows += `<tr><td class="text-muted">دامنه (Min - Max):</td><td class="fw-semibold text-end text-white">${stats.min} تا ${stats.max}</td></tr>`;
+        }
+        if (stats.q25 !== null && stats.q25 !== undefined) {
+            statRows += `<tr><td class="text-muted">چارک اول (Q25 - 25%):</td><td class="fw-semibold text-end text-white">${stats.q25}</td></tr>`;
+        }
+        if (stats.q75 !== null && stats.q75 !== undefined) {
+            statRows += `<tr><td class="text-muted">چارک سوم (Q75 - 75%):</td><td class="fw-semibold text-end text-white">${stats.q75}</td></tr>`;
+        }
+        if (stats.skewness !== null && stats.skewness !== undefined) {
+            statRows += `<tr><td class="text-muted">ضریب چولگی (Skewness):</td><td class="fw-semibold text-end text-white">${stats.skewness}</td></tr>`;
+        }
+        statsTbody.innerHTML = statRows || '<tr><td colspan="2" class="text-center text-muted">آمار توصیفی تکمیلی برای این ستون موجود نیست.</td></tr>';
+    }
+
+    // Chart
+    const chartContainer = document.getElementById('drawerChartContainer');
+    const chartCard = document.getElementById('drawerChartCard');
+    if (chartCard && chartContainer) {
+        if (data.visualization_url) {
+            chartCard.classList.remove('d-none');
+            chartContainer.innerHTML = `<img src="${data.visualization_url}" alt="${escapeHtml(col.name)}" class="img-fluid rounded border border-secondary border-opacity-25" style="max-height: 240px; object-fit: contain;">`;
+        } else {
+            chartCard.classList.add('d-none');
+        }
+    }
+}
+
+function sendQuickPrompt(promptText) {
+    const chatInput = document.getElementById('drawerChatInput');
+    if (chatInput) {
+        chatInput.value = promptText;
+        submitDrawerChat();
+    }
+}
+
+async function submitDrawerChat() {
+    if (isAiResponding || !currentDrawerColumnId) return;
+
+    const input = document.getElementById('drawerChatInput');
+    const prompt = input.value.trim();
+    if (!prompt) return;
+
+    input.value = '';
+    const sendBtn = document.getElementById('drawerChatSendBtn');
+    if (sendBtn) sendBtn.disabled = true;
+    isAiResponding = true;
+
+    const chatContainer = document.getElementById('drawerChatMessages');
+
+    // Append User Message
+    const userMsgEl = document.createElement('div');
+    userMsgEl.className = 'chat-bubble chat-bubble-user align-self-start';
+    userMsgEl.textContent = prompt;
+    chatContainer.appendChild(userMsgEl);
+
+    // Append AI placeholder
+    const aiWrapper = document.createElement('div');
+    aiWrapper.className = 'chat-bubble chat-bubble-ai d-flex gap-2 align-self-end';
+    aiWrapper.innerHTML = `
+        <div class="ai-avatar flex-shrink-0" style="width: 28px; height: 28px; font-size: 0.75rem;"><i class="bi bi-robot"></i></div>
+        <div class="flex-grow-1">
+            <div class="small fw-semibold text-cyan mb-1">دستیار هوشمند CircleLab</div>
+            <div class="small ai-text-content" style="white-space: pre-wrap; line-height: 1.6;"><span class="spinner-border spinner-border-sm text-cyan me-1"></span>در حال تحلیل و تولید پاسخ...</div>
+        </div>
+    `;
+    chatContainer.appendChild(aiWrapper);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+
+    const textContentEl = aiWrapper.querySelector('.ai-text-content');
+    const csrftoken = getCookie('csrftoken');
+
+    try {
+        const response = await fetch(`/api/columns/${currentDrawerColumnId}/chat/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+                prompt: prompt,
+                history: currentColumnChatHistory
+            })
+        });
+
+        if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            textContentEl.textContent = errData.detail || 'خطا در برقراری ارتباط با سرویس هوش مصنوعی.';
+            return;
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        let fullAiText = '';
+        let isFirstChunk = true;
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunk = decoder.decode(value, { stream: true });
+            if (isFirstChunk) {
+                textContentEl.textContent = '';
+                isFirstChunk = false;
+            }
+            fullAiText += chunk;
+            textContentEl.textContent = fullAiText;
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // Save into column chat history
+        currentColumnChatHistory.push({ role: 'user', content: prompt });
+        currentColumnChatHistory.push({ role: 'assistant', content: fullAiText });
+
+    } catch (err) {
+        console.error('Chat error:', err);
+        textContentEl.textContent = 'خطا در ارسال پیام: ' + (err.message || 'اتصال برقرار نشد.');
+    } finally {
+        isAiResponding = false;
+        if (sendBtn) sendBtn.disabled = false;
+        input.focus();
     }
 }
 

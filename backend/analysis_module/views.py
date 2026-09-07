@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import StreamingHttpResponse
 from django.urls import reverse_lazy
 from django.views.generic import TemplateView, CreateView, DetailView
 from django.utils.decorators import method_decorator
@@ -8,6 +9,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from analysis_module.forms import ProjectModelForm
+from chat_module.services import ChatService
 from .models import Project, DataSet, Column
 from .serializers import ProjectSerializer, DataSetSerializer, ColumnSerializer, AnalysisSerializer
 from .services import DatasetService, AnalysisService
@@ -138,5 +140,71 @@ class DataSetStatusAPIView(APIView):
         dataset = get_object_or_404(DataSet, pk=pk, project__user=request.user)
         serializer = DataSetSerializer(dataset, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class DatasetMissingChartAPIView(APIView):
+    """
+    تولید و دریافت آدرس نمودار ماتریس مقادیر مفقوده (MSNO)
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk, *args, **kwargs):
+        dataset = get_object_or_404(DataSet, pk=pk, project__user=request.user)
+        chart_url = DatasetService.generate_and_save_missing_chart(dataset)
+        if not chart_url and dataset.missing_values_chart:
+            chart_url = dataset.missing_values_chart.url
+
+        if not chart_url:
+            return Response({"error": "امکان تولید نمودار مقادیر مفقوده وجود ندارد."}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({
+            "chart_url": chart_url,
+            "message": "نمودار ماتریس داده‌های مفقود با موفقیت تولید شد."
+        }, status=status.HTTP_200_OK)
+
+
+class ColumnDetailAPIView(APIView):
+    """
+    دریافت تحلیل عمیق ستون شامل value_counts، آمار توصیفی کامل، مقادیر مفقوده و ۵ ستون با بیشترین همبستگی
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, pk, *args, **kwargs):
+        column = get_object_or_404(Column, pk=pk, dataset__project__user=request.user)
+        detail_data, error = AnalysisService.get_column_detailed_analysis(column)
+        if error:
+            return Response({"error": error}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(detail_data, status=status.HTTP_200_OK)
+
+
+class ColumnChatStreamAPIView(APIView):
+    """
+    استریم گفتگوی هوش مصنوعی اختصاصی برای یک ستون همراه با تزریق کامل کانتکست آماری ستون
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk, *args, **kwargs):
+        column = get_object_or_404(Column, pk=pk, dataset__project__user=request.user)
+        prompt = request.data.get("prompt", "").strip()
+        history = request.data.get("history", [])
+
+        if not prompt:
+            return Response({"detail": "متن پیام نمی‌تواند خالی باشد."}, status=status.HTTP_400_BAD_REQUEST)
+
+        detail_data, error = AnalysisService.get_column_detailed_analysis(column)
+        if error or not detail_data:
+            detail_data = {
+                "project_name": column.dataset.project.name if column.dataset and column.dataset.project else "",
+                "stats": {},
+                "value_counts": [],
+                "top_correlations": []
+            }
+
+        stream_gen = ChatService.stream_column_chat_response(column, detail_data, prompt, history)
+        response = StreamingHttpResponse(stream_gen, content_type="text/plain; charset=utf-8")
+        response["X-Accel-Buffering"] = "no"
+        response["Cache-Control"] = "no-cache"
+        return response
 
 # endregion

@@ -66,8 +66,104 @@ class ChatService:
         )
         return system_prompt
 
+    @staticmethod
+    def build_column_system_prompt(column, detailed_data: dict) -> str:
+        """
+        تولید پرامپت سیستمی متمرکز بر یک ستون خاص همراه با تمامی جزئیات آماری، value_counts و همبستگی‌ها
+        """
+        system_prompt = (
+            "شما یک دستیار هوش مصنوعی متخصص تحلیل داده، آمار کاربردی و یادگیری ماشین در سامانه CircleLab هستید.\n"
+            "شما در حال بررسی و تحلیل عمیق یک ستون خاص از دیتاست می‌باشید. پاسخ‌ها را به زبان فارسی روان، دقیق، ساختاریافته و با بینش‌های عمیق آماری ارائه دهید.\n\n"
+            f"--- مشخصات ستون مورد بررسی ---\n"
+            f"نام ستون: «{column.name}»\n"
+            f"نوع داده (Data Type): {column.data_type}\n"
+        )
+        if detailed_data.get("project_name"):
+            system_prompt += f"نام پروژه: {detailed_data['project_name']}\n"
+
+        stats = detailed_data.get("stats", {})
+        system_prompt += (
+            f"تعداد کل رکوردها: {stats.get('total_records', 0)}\n"
+            f"تعداد مقادیر مفقوده (Missing / NaN): {stats.get('missing_count', 0)} ({stats.get('missing_percentage', 0)}%)\n"
+            f"تعداد مقادیر یونیک (Unique): {stats.get('unique_count', 0)}\n"
+        )
+
+        if stats.get("mean") is not None:
+            system_prompt += f"میانگین (Mean): {stats.get('mean')}\n"
+        if stats.get("median") is not None:
+            system_prompt += f"میانه (Median): {stats.get('median')}\n"
+        if stats.get("std") is not None:
+            system_prompt += f"انحراف معیار (Standard Deviation): {stats.get('std')}\n"
+        if stats.get("min") is not None and stats.get("max") is not None:
+            system_prompt += f"حداقل (Min): {stats.get('min')} | حداکثر (Max): {stats.get('max')}\n"
+        if stats.get("q25") is not None and stats.get("q75") is not None:
+            system_prompt += f"چارک اول (Q25): {stats.get('q25')} | چارک سوم (Q75): {stats.get('q75')}\n"
+        if stats.get("skewness") is not None:
+            system_prompt += f"ضریب چولگی (Skewness): {stats.get('skewness')}\n"
+        if stats.get("mode"):
+            system_prompt += f"مد (Mode): {stats.get('mode')}\n"
+
+        val_counts = detailed_data.get("value_counts", [])
+        if val_counts:
+            system_prompt += "\nتوزیع فراوانی مقادیر برتر (Top Value Counts):\n"
+            for item in val_counts:
+                system_prompt += f"- مقدار: «{item['value']}» -> فراوانی: {item['count']} سطر ({item['percentage']}%)\n"
+
+        top_corrs = detailed_data.get("top_correlations", [])
+        if top_corrs:
+            system_prompt += "\n۵ ستون با بالاترین میزان همبستگی (Top Correlations):\n"
+            for corr in top_corrs:
+                system_prompt += f"- ستون «{corr['column_name']}» (نوع: {corr['data_type']}) -> ضریب همبستگی: {corr['correlation']}\n"
+
+        system_prompt += (
+            "\nدستورالعمل پاسخگویی:\n"
+            "- از تمام اطلاعات آماری و همبستگی بالا به عنوان مبنای پاسخ و تحلیل علمی استفاده کنید.\n"
+            "- در صورت وجود ناهنجاری (مثل درصد بالای داده مفقود، چولگی شدید یا همبستگی بالا)، علت و نحوه مدیریت آن را توضیح دهید.\n"
+            "- در صورت نیاز به کدنویسی، کدهای استاندارد Pandas / Seaborn / Sklearn ارائه دهید.\n"
+        )
+        return system_prompt
+
     @classmethod
-    def stream_chat_response(cls, session: ChatSession, user_prompt: str):
+    def stream_column_chat_response(cls, column, detailed_data: dict, user_prompt: str, history_messages: list = None):
+        """
+        استریم پاسخ چت اختصاصی ستون با کانتکست غنی آماری
+        """
+        system_prompt = cls.build_column_system_prompt(column, detailed_data)
+        messages = [{"role": "system", "content": system_prompt}]
+
+        if history_messages:
+            for msg in history_messages:
+                messages.append(msg)
+
+        messages.append({"role": "user", "content": user_prompt})
+
+        api_key = getattr(settings, 'OPENAI_API_KEY', '') or os.getenv('OPENAI_API_KEY', '')
+        if not api_key:
+            yield "کلید API هوش مصنوعی (OPENAI_API_KEY) در تنظیمات سرور ثبت نشده است."
+            return
+
+        try:
+            import openai
+            base_url = getattr(settings, 'OPENAI_BASE_URL', None) or os.getenv('AI_BASE_URL', None) or os.getenv('OPENAI_BASE_URL', None)
+            client_kwargs = {'api_key': api_key}
+            if base_url:
+                client_kwargs['base_url'] = base_url
+
+            client = openai.OpenAI(**client_kwargs)
+            model_name = getattr(settings, 'OPENAI_MODEL', 'gpt-4o-mini')
+
+            response = client.chat.completions.create(
+                model=model_name,
+                messages=messages,
+                stream=True
+            )
+
+            for chunk in response:
+                if chunk.choices and chunk.choices[0].delta.content:
+                    yield chunk.choices[0].delta.content
+
+        except Exception as e:
+            yield f"\n[خطا در برقراری ارتباط با مدل هوش مصنوعی: {str(e)}]"
         """
         ارسال درخواست به OpenAI و استریم پاسخ به صورت Chunkهای متنی
         همچنین ذخیره پیام نهایی کاربر و دستیار در دیتابیس

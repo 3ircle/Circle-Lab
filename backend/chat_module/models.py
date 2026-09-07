@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-from analysis_module.models import Project
+from analysis_module.models import Project, Column
 
 
 class ChatSession(models.Model):
@@ -17,6 +17,14 @@ class ChatSession(models.Model):
         null=True,
         blank=True,
         verbose_name='پروژه'
+    )
+    column = models.ForeignKey(
+        Column,
+        on_delete=models.CASCADE,
+        related_name='chat_sessions',
+        null=True,
+        blank=True,
+        verbose_name='ستون'
     )
     title = models.CharField('عنوان گفتگو', max_length=255, default='گفتگوی جدید')
     created_at = models.DateTimeField('تاریخ ساخت', auto_now_add=True)

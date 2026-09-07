@@ -103,11 +103,54 @@ class DatasetService:
                 status=DataSet.STATUS_CHOICES[0][0] # 'pending'
             )
 
-            # ارسال پردازش به سِلِری به صورت ناهمگام (Async)
-            from ..tasks import process_dataset_async
-            process_dataset_async.delay(dataset.id)
+            # ارسال پردازش به سِلِری به صورت ناهمگام (Async) با Fallback در صورت عدم دسترسی به سِلِری
+            try:
+                from ..tasks import process_dataset_async
+                process_dataset_async.delay(dataset.id)
+            except Exception as e:
+                try:
+                    dataset.status = 'processing'
+                    dataset.save(update_fields=['status'])
+                    DatasetService.process_dataset_file(dataset)
+                    dataset.status = 'completed'
+                    dataset.save(update_fields=['status'])
+                except Exception as sync_err:
+                    dataset.status = 'failed'
+                    dataset.error_message = str(sync_err)
+                    dataset.save(update_fields=['status', 'error_message'])
 
         return project
+
+    @staticmethod
+    def generate_and_save_missing_chart(dataset):
+        """
+        تولید و ذخیره نمودار ماتریس داده‌های مفقود (MSNO) برای یک دیتاست
+        """
+        if not dataset or not dataset.file:
+            return None
+
+        file_path = dataset.file.path
+        if not os.path.exists(file_path):
+            return None
+
+        try:
+            df = DatasetService.load_dataframe(file_path)
+            if df.empty:
+                return None
+
+            if len(df) > 10000:
+                df_sample = df.sample(n=10000, random_state=42)
+            else:
+                df_sample = df
+
+            missing_chart_buf = VisualizationService.generate_missing_values_chart(df_sample)
+            if missing_chart_buf:
+                chart_filename = f"missing_matrix_{dataset.id}.png"
+                dataset.missing_values_chart.save(chart_filename, ContentFile(missing_chart_buf.getvalue()), save=True)
+                return dataset.missing_values_chart.url
+        except Exception as e:
+            print(f"Error generating missing values chart: {e}")
+        return None
 
     @staticmethod
     def process_dataset_file(dataset):
@@ -146,18 +189,22 @@ class DatasetService:
 
         # تولید و ذخیره نمودار ماتریس داده‌های مفقود
         try:
-            missing_chart_buf = VisualizationService.generate_missing_values_chart(df_sample)
-            if missing_chart_buf:
-                chart_filename = f"missing_matrix_{dataset.id}.png"
-                dataset.missing_values_chart.save(chart_filename, ContentFile(missing_chart_buf.getvalue()), save=True)
+            DatasetService.generate_and_save_missing_chart(dataset)
         except Exception as chart_err:
             print(f"Error generating missing values chart: {chart_err}")
 
     @staticmethod
     def get_project_detail_context(project):
         dataset = getattr(project, "dataset", None)
-        columns = dataset.columns.all() if dataset else []
 
+        # در صورت نبود نمودار ماتریس مفقوده، خودکار تولید کن
+        if dataset and dataset.file and not dataset.missing_values_chart:
+            try:
+                DatasetService.generate_and_save_missing_chart(dataset)
+            except Exception as e:
+                print(f"Auto-generate missing chart error: {e}")
+
+        columns = dataset.columns.all() if dataset else []
         type_counts = ProfilingService.get_column_type_counts(columns)
 
         return {

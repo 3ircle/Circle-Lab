@@ -57,52 +57,67 @@ class VisualizationService:
         تولید نمودار ماتریس مقادیر مفقوده (MSNO Matrix / Missing Values Matrix)
         با پشتیبانی از تعداد بالای ستون‌ها و استایل Dark Mode کاستوم CircleLab
         """
+        if df is None or df.empty:
+            return None
+
         num_cols = len(df.columns)
         if num_cols == 0:
             return None
 
-        # محاسبه عرض پویا بر اساس تعداد ستون‌ها تا اسکوئیش و ناخوانا نشوند
-        fig_width = max(10.0, num_cols * 0.38)
-        fig, ax = plt.subplots(figsize=(fig_width, 4.2), dpi=100)
+        # نمونه‌برداری برای ماتریس تا حداکثر ۵۰۰ سطر جهت عملکرد فوق‌العاده سریع و وضوح ماتریس
+        if len(df) > 500:
+            step = max(1, len(df) // 500)
+            df_display = df.iloc[::step].head(500)
+        else:
+            df_display = df
 
-        # Dark Theme Colors
+        fig_width = max(10.0, min(num_cols * 0.45, 30.0))
+        fig, ax = plt.subplots(figsize=(fig_width, 4.5), dpi=100)
+
+        # استایل پس‌زمینه Dark Theme
         fig.patch.set_facecolor('#1E293B')
         ax.set_facecolor('#1E293B')
 
+        rendered_with_msno = False
         try:
             import missingno as msno
             msno.matrix(
-                df,
+                df_display,
                 sparkline=False,
                 color=(0.133, 0.827, 0.933),
                 fontsize=9,
-                labels=True,
                 ax=ax
             )
             ax.set_facecolor('#1E293B')
             ax.tick_params(colors='#CBD5E1', labelsize=8)
+            rendered_with_msno = True
         except Exception:
-            # Fallback به Matplotlib / Seaborn
-            if len(df) > 300:
-                df_sampled = df.iloc[::len(df)//300]
-            else:
-                df_sampled = df
+            rendered_with_msno = False
 
-            not_null_matrix = df_sampled.notnull().values
+        if not rendered_with_msno:
+            ax.clear()
+            fig.patch.set_facecolor('#1E293B')
+            ax.set_facecolor('#1E293B')
+
+            not_null_matrix = df_display.notnull().astype(int).values
             cmap = mcolors.ListedColormap(['#334155', '#22D3EE'])
 
-            ax.imshow(not_null_matrix, aspect='auto', cmap=cmap, interpolation='none')
-
+            ax.imshow(not_null_matrix, aspect='auto', cmap=cmap, interpolation='nearest')
             ax.set_xticks(range(num_cols))
-            ax.set_xticklabels(df.columns, rotation=45, ha='right', colors='#CBD5E1', fontsize=8)
+            col_labels = [str(c)[:20] + ('...' if len(str(c)) > 20 else '') for c in df.columns]
+            ax.set_xticklabels(col_labels, rotation=45, ha='right', color='#CBD5E1', fontsize=8)
             ax.set_yticks([])
-            ax.tick_params(colors='#CBD5E1')
+            ax.tick_params(colors='#CBD5E1', labelsize=8)
 
             for spine in ax.spines.values():
                 spine.set_color('#334155')
 
         ax.set_title('ماتریس مقادیر مفقوده (Missing Values Matrix)', color='#FFFFFF', fontsize=11, pad=12)
-        plt.tight_layout()
+
+        try:
+            plt.tight_layout()
+        except Exception:
+            pass
 
         buf = io.BytesIO()
         plt.savefig(buf, format='png', facecolor=fig.get_facecolor(), edgecolor='none')
