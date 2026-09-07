@@ -166,4 +166,10 @@ CELERY_TASK_TIME_LIMIT = 30 * 60
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '')
 OPENAI_MODEL = os.getenv('OPENAI_MODEL', 'gpt-4o-mini')
 
+# Authentication Configuration
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'index-page'
+LOGOUT_REDIRECT_URL = 'login'
+
+
 

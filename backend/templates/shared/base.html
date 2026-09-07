@@ -38,10 +38,33 @@
                 </ul>
                 {% block navbar_extra %}
                 <div class="d-flex align-items-center gap-3">
+                    {% if user.is_authenticated %}
                     <a href="{% url 'create-project-page' %}" class="btn btn-indigo d-flex align-items-center gap-2">
                         <i class="bi bi-plus-lg"></i>
                         <span>پروژه جدید</span>
                     </a>
+                    <div class="dropdown">
+                        <button class="btn btn-outline-dark-custom dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i>
+                            <span>{{ user.username }}</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end">
+                            <li>
+                                <form method="POST" action="{% url 'logout' %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="dropdown-item text-danger d-flex align-items-center gap-2">
+                                        <i class="bi bi-box-arrow-right"></i> خروج از حساب
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                    {% else %}
+                    <a href="{% url 'login' %}" class="btn btn-indigo d-flex align-items-center gap-2">
+                        <i class="bi bi-box-arrow-in-right"></i>
+                        <span>ورود</span>
+                    </a>
+                    {% endif %}
                 </div>
                 {% endblock %}
             </div>

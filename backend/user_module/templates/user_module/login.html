@@ -1,0 +1,79 @@
+{% extends 'shared/base.html' %}
+{% load static %}
+
+{% block title %}سامانه تحلیل داده | ورود به حساب کاربری{% endblock %}
+
+{% block navbar_extra %}{% endblock %}
+
+{% block content %}
+<main class="container d-flex align-items-center justify-content-center flex-grow-1 py-5">
+    <div class="w-100" style="max-width: 440px;">
+
+        <!-- Logo & Title Header -->
+        <div class="text-center mb-4">
+            <img src="{% static 'images/logo.png' %}" alt="CircleLab Logo" class="mb-3" style="height: 56px; width: auto;">
+            <h4 class="fw-bold text-white mb-1">ورود به سامانه Circle<span style="color: var(--secondary-accent);">Lab</span></h4>
+            <p class="text-muted small">برای دسترسی به پروژه‌ها و دستیار هوش مصنوعی وارد شوید</p>
+        </div>
+
+        <!-- Login Card -->
+        <div class="card card-dark shadow-lg">
+            <div class="card-body p-4 p-sm-5">
+
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger bg-danger bg-opacity-25 text-white border-0 rounded-3 mb-4 p-3 small d-flex align-items-center gap-2">
+                    <i class="bi bi-exclamation-triangle-fill fs-5 text-danger"></i>
+                    <div>
+                        {% for error in form.non_field_errors %}
+                            <div>{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <form method="POST" action="{% url 'login' %}" novalidate>
+                    {% csrf_token %}
+
+                    {% if request.GET.next %}
+                        <input type="hidden" name="next" value="{{ request.GET.next }}">
+                    {% endif %}
+
+                    <!-- Username Field -->
+                    <div class="mb-3">
+                        <label for="{{ form.username.id_for_label }}" class="form-label text-white small fw-semibold">
+                            <i class="bi bi-person me-1 text-muted"></i> {{ form.username.label }}
+                        </label>
+                        {{ form.username }}
+                        {% if form.username.errors %}
+                            <div class="text-danger small mt-1">{{ form.username.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Password Field -->
+                    <div class="mb-4">
+                        <label for="{{ form.password.id_for_label }}" class="form-label text-white small fw-semibold">
+                            <i class="bi bi-lock me-1 text-muted"></i> {{ form.password.label }}
+                        </label>
+                        {{ form.password }}
+                        {% if form.password.errors %}
+                            <div class="text-danger small mt-1">{{ form.password.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="btn btn-indigo w-100 py-2.5 d-flex align-items-center justify-content-center gap-2">
+                        <i class="bi bi-box-arrow-in-right fs-5"></i>
+                        <span class="fw-bold">ورود به سیستم</span>
+                    </button>
+                </form>
+
+            </div>
+        </div>
+
+        <div class="text-center mt-4 text-muted small">
+            سامانه هوشمند تحلیل داده و هوش مصنوعی CircleLab
+        </div>
+
+    </div>
+</main>
+{% endblock %}
