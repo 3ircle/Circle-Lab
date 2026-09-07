@@ -12,6 +12,8 @@ services:
       dockerfile: Dockerfile
     container_name: circle_lab_web
     command: python manage.py runserver 0.0.0.0:8000
+    env_file:
+      - ./backend/.env
     volumes:
       - ./backend:/app
     ports:
@@ -30,6 +32,8 @@ services:
       dockerfile: Dockerfile
     container_name: circle_lab_celery
     command: celery -A core worker -l info
+    env_file:
+      - ./backend/.env
     volumes:
       - ./backend:/app
     environment:
