@@ -165,6 +165,8 @@ CELERY_TASK_TIME_LIMIT = 30 * 60
 # OpenAI Configuration
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '')
 OPENAI_MODEL = os.getenv('OPENAI_MODEL', 'gpt-4o-mini')
+OPENAI_BASE_URL = os.getenv('AI_BASE_URL', os.getenv('OPENAI_BASE_URL', None))
+
 
 # Authentication Configuration
 LOGIN_URL = 'login'

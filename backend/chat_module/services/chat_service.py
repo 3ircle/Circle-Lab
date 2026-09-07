@@ -89,7 +89,12 @@ class ChatService:
 
         try:
             import openai
-            client = openai.OpenAI(api_key=api_key)
+            base_url = getattr(settings, 'OPENAI_BASE_URL', None) or os.getenv('AI_BASE_URL', None) or os.getenv('OPENAI_BASE_URL', None)
+            client_kwargs = {'api_key': api_key}
+            if base_url:
+                client_kwargs['base_url'] = base_url
+
+            client = openai.OpenAI(**client_kwargs)
             model_name = getattr(settings, 'OPENAI_MODEL', 'gpt-4o-mini')
 
             response = client.chat.completions.create(
