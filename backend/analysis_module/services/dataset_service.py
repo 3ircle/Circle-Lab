@@ -49,9 +49,9 @@ class DatasetService:
                     elif sample.count("\t") > sample.count(","):
                         delimiter = "\t"
 
-                return pd.read_csv(file_path, encoding=encoding, errors="replace", delimiter=delimiter)
+                return pd.read_csv(file_path, encoding=encoding, encoding_errors="replace", delimiter=delimiter)
             except Exception:
-                return pd.read_csv(file_path, encoding="utf-8", errors="replace")
+                return pd.read_csv(file_path, encoding="utf-8", encoding_errors="replace")
 
         elif ext in ['.xlsx', '.xls']:
             return pd.read_excel(file_path)
