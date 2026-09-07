@@ -33,7 +33,7 @@
                         <a class="nav-link {% block nav_projects %}{% endblock %} px-3 rounded-3" href="{% url 'index-page' %}"><i class="bi bi-folder2-open me-2"></i>پروژه‌ها</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% block nav_chat %}{% endblock %} px-3 rounded-3" href=""><i class="bi bi-robot me-2"></i>دستيار هوش مصنوعی</a>
+                        <a class="nav-link {% block nav_chat %}{% endblock %} px-3 rounded-3" href="{% url 'chat-page' %}"><i class="bi bi-robot me-2"></i>دستيار هوش مصنوعی</a>
                     </li>
                 </ul>
                 {% block navbar_extra %}

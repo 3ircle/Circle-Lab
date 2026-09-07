@@ -7,9 +7,14 @@
 
 {% block navbar_extra %}
 <div class="d-flex align-items-center gap-2">
-    <select class="form-select form-select-dark form-select-sm" style="min-width: 220px;">
-        <option selected>پروژه: تحلیل رفتار مشتریان فروشگاه</option>
-        <option>پروژه: پیش‌بینی فروش محصولات</option>
+    <select id="projectSelect" class="form-select form-select-dark form-select-sm" style="min-width: 220px;" onchange="changeProject(this.value)">
+        {% for proj in projects %}
+        <option value="{{ proj.id }}" {% if active_project and active_project.id == proj.id %}selected{% endif %}>
+            پروژه: {{ proj.name }}
+        </option>
+        {% empty %}
+        <option value="">پروژه‌ای تعریف نشده است</option>
+        {% endfor %}
     </select>
 </div>
 {% endblock %}
@@ -24,41 +29,37 @@
         <!-- Sidebar: Saved Conversations & Quick Context -->
         <div class="col-12 col-md-3 border-end border-secondary border-opacity-25 bg-dark-surface p-3 d-none d-md-flex flex-column" style="background: var(--bg-surface);">
 
-            <button class="btn btn-indigo w-100 mb-3 d-flex align-items-center justify-content-center gap-2">
+            <button class="btn btn-indigo w-100 mb-3 d-flex align-items-center justify-content-center gap-2" onclick="createNewSession()">
                 <i class="bi bi-plus-lg"></i>
                 <span>گفتگوی جدید</span>
             </button>
 
             <div class="text-muted small fw-bold mb-2">گفتگوهای اخیر</div>
-            <div class="list-group list-group-flush gap-1 flex-grow-1 overflow-y-auto mb-3">
-                <a href="#" class="list-group-item list-group-item-action bg-transparent text-white border-0 rounded-2 active p-2" style="background-color: rgba(99, 102, 241, 0.15) !important;">
+            <div class="list-group list-group-flush gap-1 flex-grow-1 overflow-y-auto mb-3" id="sessionList">
+                {% for sess in chat_sessions %}
+                <a href="javascript:void(0)" onclick="loadSession({{ sess.id }})" id="session-item-{{ sess.id }}" class="list-group-item list-group-item-action bg-transparent text-white border-0 rounded-2 p-2 session-item">
                     <div class="d-flex align-items-center gap-2">
                         <i class="bi bi-chat-text text-indigo" style="color: var(--primary-accent);"></i>
-                        <div class="text-truncate small">بررسی همبستگی سن و خرید</div>
+                        <div class="text-truncate small session-title">{{ sess.title }}</div>
                     </div>
                 </a>
-                <a href="#" class="list-group-item list-group-item-action bg-transparent text-muted border-0 rounded-2 p-2">
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="bi bi-chat-text"></i>
-                        <div class="text-truncate small">شناسایی داده‌های پرت فروش</div>
-                    </div>
-                </a>
-                <a href="#" class="list-group-item list-group-item-action bg-transparent text-muted border-0 rounded-2 p-2">
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="bi bi-chat-text"></i>
-                        <div class="text-truncate small">پیش‌نهاد مدل خوشه‌بندی مشتریان</div>
-                    </div>
-                </a>
+                {% empty %}
+                <div class="text-muted small p-2">هیچ گفتگویی ثبت نشده است.</div>
+                {% endfor %}
             </div>
 
             <!-- Active Dataset Context Card -->
-            <div class="p-3 rounded-3 border border-secondary border-opacity-25 mt-auto" style="background: #0F172A;">
+            <div class="p-3 rounded-3 border border-secondary border-opacity-25 mt-auto" style="background: #0F172A;" id="datasetContextCard">
+                {% if active_project and active_project.dataset %}
                 <div class="d-flex align-items-center justify-content-between mb-2">
                     <span class="text-muted small">دیتاست فعال</span>
-                    <span class="badge bg-success bg-opacity-25 text-success">آماده تحلیل</span>
+                    <span class="badge bg-success bg-opacity-25 text-success">{{ active_project.dataset.get_status_display }}</span>
                 </div>
-                <div class="fw-bold text-white small text-truncate mb-1">Customers_Q3_2026.csv</div>
-                <div class="text-muted extra-small" style="font-size: 0.75rem;">۴۵,۲۰۰ سطر | ۱۸ ستون</div>
+                <div class="fw-bold text-white small text-truncate mb-1">{{ active_project.dataset.file.name|default:"دیتاست" }}</div>
+                <div class="text-muted extra-small" style="font-size: 0.75rem;">{{ active_project.dataset.record_count }} سطر | {{ active_project.dataset.columns.count }} ستون</div>
+                {% else %}
+                <div class="text-muted small text-center py-2">دیتاست فعال یافت نشد</div>
+                {% endif %}
             </div>
 
         </div>
@@ -67,49 +68,17 @@
         <div class="col-12 col-md-9 d-flex flex-column h-100" style="background: var(--bg-main);">
 
             <!-- Chat Messages Feed -->
-            <div class="chat-messages flex-grow-1 p-4 overflow-y-auto">
+            <div class="chat-messages flex-grow-1 p-4 overflow-y-auto" id="chatContainer">
 
                 <!-- AI Welcome Message -->
-                <div class="d-flex gap-3 chat-bubble-ai chat-bubble">
+                <div class="d-flex gap-3 chat-bubble-ai chat-bubble mb-3">
                     <div class="ai-avatar flex-shrink-0">
                         <i class="bi bi-robot"></i>
                     </div>
                     <div>
                         <div class="fw-bold text-cyan mb-1" style="color: var(--secondary-accent);">دستیار هوش مصنوعی CircleLab</div>
-                        <p class="mb-2">سلام! من دیتاست <strong>«تحلیل رفتار مشتریان فروشگاه»</strong> را بررسی کردم. آماده پاسخگویی به سوالات شما یا انجام تحلیل‌های پیشرفته متنی و آماری هستم.</p>
-                        <p class="mb-0 text-muted small">چند سوال پیشنهادی برای شروع:</p>
-                    </div>
-                </div>
-
-                <!-- User Message -->
-                <div class="d-flex gap-3 chat-bubble-user chat-bubble ms-auto">
-                    <div>
-                        <p class="mb-0">کدام گروه سنی بیشترین میزان خرید را داشته‌اند و میانگین خرید آن‌ها چقدر است؟</p>
-                    </div>
-                    <div class="user-avatar flex-shrink-0">
-                        <i class="bi bi-person-fill"></i>
-                    </div>
-                </div>
-
-                <!-- AI Response with Stats & Highlights -->
-                <div class="d-flex gap-3 chat-bubble-ai chat-bubble">
-                    <div class="ai-avatar flex-shrink-0">
-                        <i class="bi bi-robot"></i>
-                    </div>
-                    <div class="w-100">
-                        <div class="fw-bold text-cyan mb-2" style="color: var(--secondary-accent);">دستیار هوش مصنوعی CircleLab</div>
-                        <p class="mb-3">بر اساس تحلیل ستون‌های <code>Customer_Age</code> و <code>Total_Purchase_Amount</code>:</p>
-
-                        <!-- Data Summary Box inside Chat -->
-                        <div class="p-3 rounded-3 mb-3 border border-secondary border-opacity-25" style="background: #0F172A;">
-                            <ul class="mb-0 ps-3 text-white small">
-                                <li class="mb-1">گروه سنی <strong>۲۵ تا ۳۴ سال</strong> با <strong>۱۹,۵۰۰ خرید</strong> بیشترین سهم خریداران را تشکیل می‌دهند.</li>
-                                <li class="mb-1">میانگین مبلغ خرید این گروه سنی <strong>۳,۱۵۰,۰۰۰ تومان</strong> است که ۲۰٪ بالاتر از میانگین کل مشتریان است.</li>
-                                <li>گروه سنی ۵۵ سال به بالا کمترین تعداد خرید اما بالاترین ارزش سبد خرید را ثبت کرده‌اند.</li>
-                            </ul>
-                        </div>
-
-                        <p class="mb-0 text-muted small">آیا مایلید نمودار مقایسه‌ای این دو گروه سنی را برای شما ترسیم کنم یا مدل خوشه‌بندی اجرا کنم؟</p>
+                        <p class="mb-2">سلام! من آماده پاسخگویی به سوالات شما و تحلیل داده‌های پروژه <strong>«{{ active_project.name|default:"انتخاب شده" }}»</strong> هستم.</p>
+                        <p class="mb-0 text-muted small">سوال یا درخواست خود را مطرح کنید تا با مدل هوش مصنوعی پردازش شود.</p>
                     </div>
                 </div>
 
@@ -117,25 +86,22 @@
 
             <!-- Prompt Suggestions Bar -->
             <div class="px-4 py-2 border-top border-secondary border-opacity-25 d-flex gap-2 overflow-x-auto">
-                <button class="btn btn-outline-dark-custom btn-sm text-nowrap prompt-suggestion">
-                    <i class="bi bi-magic me-1 text-indigo" style="color: var(--primary-accent);"></i> نمودار همبستگی ستون‌ها
+                <button type="button" class="btn btn-outline-dark-custom btn-sm text-nowrap prompt-suggestion" onclick="useSuggestion('ماتریس همبستگی ستون‌های عددی را تحلیل کن.')">
+                    <i class="bi bi-magic me-1 text-indigo" style="color: var(--primary-accent);"></i> تحلیل همبستگی ستون‌ها
                 </button>
-                <button class="btn btn-outline-dark-custom btn-sm text-nowrap prompt-suggestion">
-                    <i class="bi bi-exclamation-triangle me-1 text-warning"></i> شناسایی داده‌های پرت (Outliers)
+                <button type="button" class="btn btn-outline-dark-custom btn-sm text-nowrap prompt-suggestion" onclick="useSuggestion('شناسایی داده‌های مفقود و داده‌های پرت (Outliers) را انجام بده.')">
+                    <i class="bi bi-exclamation-triangle me-1 text-warning"></i> شناسایی داده‌های مفقود و پرت
                 </button>
-                <button class="btn btn-outline-dark-custom btn-sm text-nowrap prompt-suggestion">
-                    <i class="bi bi-file-earmark-code me-1 text-cyan" style="color: var(--secondary-accent);"></i> کد پایتون برای تحلیل رگرسیون
+                <button type="button" class="btn btn-outline-dark-custom btn-sm text-nowrap prompt-suggestion" onclick="useSuggestion('کد کامل پایتون (pandas و seaborn) برای تحلیل توزیع ستون‌ها بنویس.')">
+                    <i class="bi bi-file-earmark-code me-1 text-cyan" style="color: var(--secondary-accent);"></i> کد پایتون برای تحلیل توزیع
                 </button>
             </div>
 
             <!-- Chat Input Form -->
             <div class="p-3 p-md-4 border-top border-secondary border-opacity-25" style="background: var(--bg-surface);">
-                <form class="d-flex align-items-center gap-2">
-                    <button type="button" class="btn btn-outline-dark-custom p-2 px-3" data-bs-toggle="tooltip" title="ضمیمه کردن فایل جدید">
-                        <i class="bi bi-paperclip fs-5"></i>
-                    </button>
-                    <input type="text" id="chatInputField" class="form-control form-control-dark py-2" placeholder="سوال خود را درباره دیتاست بپرسید..." required>
-                    <button type="submit" class="btn btn-indigo px-4 py-2 d-flex align-items-center gap-2">
+                <form id="chatForm" onsubmit="submitChatMessage(event)" class="d-flex align-items-center gap-2">
+                    <input type="text" id="chatInputField" class="form-control form-control-dark py-2" placeholder="سوال خود را درباره دیتاست بپرسید..." required autocomplete="off">
+                    <button type="submit" id="sendBtn" class="btn btn-indigo px-4 py-2 d-flex align-items-center gap-2">
                         <span>ارسال</span>
                         <i class="bi bi-send-fill"></i>
                     </button>
@@ -146,4 +112,213 @@
 
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let activeProjectId = "{{ active_project.id|default:'' }}";
+let activeSessionId = null;
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function changeProject(projectId) {
+    if (projectId) {
+        window.location.href = `{% url 'chat-page' %}?project_id=${projectId}`;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    // اگر نشستی وجود داشت، اولین نشست را انتخاب کن
+    const firstSession = document.querySelector('.session-item');
+    if (firstSession) {
+        const sessId = firstSession.id.replace('session-item-', '');
+        loadSession(sessId);
+    } else if (activeProjectId) {
+        createNewSession();
+    }
+});
+
+async function createNewSession() {
+    if (!activeProjectId) {
+        alert('لطفاً ابتدا یک پروژه ایجاد یا انتخاب نمایید.');
+        return;
+    }
+    const csrftoken = getCookie('csrftoken');
+    try {
+        const res = await fetch('/chat/api/sessions/create/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+                project_id: activeProjectId,
+                title: 'گفتگوی جدید'
+            })
+        });
+        if (res.ok) {
+            const data = await res.json();
+            window.location.reload();
+        }
+    } catch (err) {
+        console.error('Error creating session:', err);
+    }
+}
+
+async function loadSession(sessionId) {
+    activeSessionId = sessionId;
+
+    document.querySelectorAll('.session-item').forEach(el => {
+        el.classList.remove('active');
+        el.style.backgroundColor = 'transparent';
+    });
+
+    const activeItem = document.getElementById(`session-item-${sessionId}`);
+    if (activeItem) {
+        activeItem.classList.add('active');
+        activeItem.style.backgroundColor = 'rgba(99, 102, 241, 0.15)';
+    }
+
+    try {
+        const res = await fetch(`/chat/api/sessions/${sessionId}/messages/`);
+        if (res.ok) {
+            const messages = await res.json();
+            renderMessages(messages);
+        }
+    } catch (err) {
+        console.error('Error loading session messages:', err);
+    }
+}
+
+function renderMessages(messages) {
+    const container = document.getElementById('chatContainer');
+    // نگه‌داشتن پیام پیام خوش‌آمدگویی
+    const welcomeHtml = container.firstElementChild ? container.firstElementChild.outerHTML : '';
+    container.innerHTML = welcomeHtml;
+
+    messages.forEach(msg => {
+        if (msg.sender === 'user') {
+            appendUserBubble(msg.content);
+        } else if (msg.sender === 'assistant') {
+            appendAIBubble(msg.content);
+        }
+    });
+
+    container.scrollTop = container.scrollHeight;
+}
+
+function appendUserBubble(text) {
+    const container = document.getElementById('chatContainer');
+    const div = document.createElement('div');
+    div.className = 'd-flex gap-3 chat-bubble-user chat-bubble ms-auto mb-3';
+    div.innerHTML = `
+        <div>
+            <p class="mb-0">${escapeHtml(text)}</p>
+        </div>
+        <div class="user-avatar flex-shrink-0">
+            <i class="bi bi-person-fill"></i>
+        </div>
+    `;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+}
+
+function appendAIBubble(text = '') {
+    const container = document.getElementById('chatContainer');
+    const div = document.createElement('div');
+    div.className = 'd-flex gap-3 chat-bubble-ai chat-bubble mb-3';
+    div.innerHTML = `
+        <div class="ai-avatar flex-shrink-0">
+            <i class="bi bi-robot"></i>
+        </div>
+        <div class="w-100">
+            <div class="fw-bold text-cyan mb-1" style="color: var(--secondary-accent);">دستیار هوش مصنوعی CircleLab</div>
+            <div class="ai-content-text">${text ? escapeHtml(text).replace(/\n/g, '<br>') : '<span class="spinner-border spinner-border-sm text-cyan" role="status"></span>'}</div>
+        </div>
+    `;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+    return div.querySelector('.ai-content-text');
+}
+
+async function submitChatMessage(e) {
+    e.preventDefault();
+    const input = document.getElementById('chatInputField');
+    const prompt = input.value.trim();
+
+    if (!prompt) return;
+
+    if (!activeSessionId) {
+        alert('لطفاً یک گفتگوی فعال انتخاب یا ایجاد نمایید.');
+        return;
+    }
+
+    input.value = '';
+    appendUserBubble(prompt);
+
+    const aiContentElem = appendAIBubble('');
+    const csrftoken = getCookie('csrftoken');
+
+    try {
+        const response = await fetch(`/chat/api/sessions/${activeSessionId}/stream/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ prompt: prompt })
+        });
+
+        if (!response.ok) {
+            aiContentElem.textContent = 'خطا در ارتباط با سرور چت.';
+            return;
+        }
+
+        aiContentElem.textContent = '';
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        const container = document.getElementById('chatContainer');
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            const chunk = decoder.decode(value, { stream: true });
+            aiContentElem.textContent += chunk;
+            container.scrollTop = container.scrollHeight;
+        }
+
+    } catch (err) {
+        console.error('Streaming error:', err);
+        aiContentElem.textContent = 'خطا در دریافت پاسخ از هوش مصنوعی.';
+    }
+}
+
+function useSuggestion(promptText) {
+    const input = document.getElementById('chatInputField');
+    if (input) {
+        input.value = promptText;
+        input.focus();
+    }
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+</script>
 {% endblock %}
