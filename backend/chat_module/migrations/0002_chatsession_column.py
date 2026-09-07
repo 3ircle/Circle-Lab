@@ -5,7 +5,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('analysis_module', '0008_dataset_status_error_message'),
+        ('analysis_module', '0001_initial'),
         ('chat_module', '0001_initial'),
     ]
 
