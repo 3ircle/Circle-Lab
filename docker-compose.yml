@@ -18,10 +18,12 @@ services:
       - ./backend:/app
     ports:
       - "8000:8000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=django-db
-      - SECRET_KEY=django-insecure-)17_)lk_1b=8qs&sjznxn929(i9&rd7!1j59tv^uh7y^7gfba^
+      - SECRET_KEY=9cU^s*(HJVjhuLr4sHtz_iyy2PK9gsaQ@tPFvVzC@3CyPGPdYP
       - DEBUG=1
     depends_on:
       - redis
@@ -36,10 +38,12 @@ services:
       - ./backend/.env
     volumes:
       - ./backend:/app
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=django-db
-      - SECRET_KEY=django-insecure-)17_)lk_1b=8qs&sjznxn929(i9&rd7!1j59tv^uh7y^7gfba^
+      - SECRET_KEY=9cU^s*(HJVjhuLr4sHtz_iyy2PK9gsaQ@tPFvVzC@3CyPGPdYP
       - DEBUG=1
     depends_on:
       - redis
